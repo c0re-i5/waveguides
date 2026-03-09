@@ -257,6 +257,9 @@ input[type="range"] {
                 <option value="filled-diamond">Filled Diamond</option>
                 <option value="star">Star</option>
                 <option value="filled-star">Filled Star</option>
+                <option value="sierpinski-carpet">Sierpinski Carpet</option>
+                <option value="sierpinski-triangle">Sierpinski Triangle</option>
+                <option value="koch-snowflake">Koch Snowflake</option>
             </select>
         </div>
         <div class="group">
@@ -292,6 +295,16 @@ input[type="range"] {
         </div>
         <div class="divider"></div>
         <div class="group">
+            <label><input type="checkbox" id="chk-grid"> Grid</label>
+            <input type="range" id="rng-grid" min="5" max="30" value="10" style="width:50px">
+            <span id="val-grid" class="slider-val">10</span>
+        </div>
+        <div class="divider"></div>
+        <div class="group">
+            <button class="tool-btn" data-tool="select" title="Select region (copy/paste)">✂</button>
+        </div>
+        <div class="divider"></div>
+        <div class="group">
             <button id="btn-undo" title="Undo (Ctrl+Z)">↩</button>
             <button id="btn-redo" title="Redo (Ctrl+Shift+Z)">↪</button>
             <button id="btn-play" class="btn-green">▶</button>
@@ -317,6 +330,8 @@ input[type="range"] {
                 <p><strong>Controls:</strong></p>
                 <p>🎨 Paint medium · 🧱 Draw walls · 〰️ Place oscillator · 💥 Drop pulse · ⌫ Erase</p>
                 <p><kbd>Space</kbd> play/pause · <kbd>R</kbd> reset waves · <kbd>C</kbd> clear to preset · <kbd>1</kbd>-<kbd>4</kbd> select medium · Right-click erases</p>
+                <p><kbd>Ctrl+G</kbd> toggle grid · <kbd>✂</kbd> select → <kbd>Ctrl+C</kbd> copy → <kbd>Ctrl+V</kbd> paste · <kbd>Esc</kbd> cancel</p>
+                <p><strong>Fractals:</strong> Sierpinski Carpet, Sierpinski Triangle, Koch Snowflake — depth auto-scales with drag size.</p>
                 <p id="preset-desc"></p>
             </div>
         </div>
@@ -398,6 +413,21 @@ let lastPaintX = -1, lastPaintY = -1;
 let currentShape = 'free';
 let shapeAnchorX = -1, shapeAnchorY = -1;
 let lineThickness = 1;
+
+// Grid snap
+let gridEnabled = false;
+let gridSpacing = 10;
+
+function snapToGrid(v) {
+    return gridEnabled ? Math.round(v / gridSpacing) * gridSpacing : v;
+}
+
+// Copy/paste
+let clipboard = null;   // { w, h, data: Uint8Array }
+let selectAnchorX = -1, selectAnchorY = -1;
+let selectionRect = null; // { x, y, w, h }
+let pastePreview = null;  // { x, y } while pasting
+let isPasting = false;
 
 // Undo/redo stacks
 const MAX_UNDO = 50;
@@ -797,6 +827,86 @@ function paintDiamond(cx, cy, rx, ry, medIdx, filled) {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+//  FRACTAL SHAPES
+// ═══════════════════════════════════════════════════════════════════════
+
+function paintSierpinskiCarpet(cx, cy, size, medIdx, depth) {
+    if (depth <= 0 || size < 3) {
+        // Fill the square
+        const half = Math.floor(size / 2);
+        for (let dy = -half; dy <= half; dy++)
+            for (let dx = -half; dx <= half; dx++)
+                paintPixel(cx + dx, cy + dy, medIdx);
+        return;
+    }
+    const third = Math.max(Math.round(size / 3), 1);
+    // 8 surrounding sub-squares (skip center)
+    for (let row = -1; row <= 1; row++) {
+        for (let col = -1; col <= 1; col++) {
+            if (row === 0 && col === 0) continue; // the hole
+            paintSierpinskiCarpet(cx + col * third, cy + row * third, third, medIdx, depth - 1);
+        }
+    }
+}
+
+function paintSierpinskiTriangle(cx, cy, size, medIdx, depth) {
+    if (depth <= 0 || size < 4) {
+        // Fill a triangle pointing up
+        const h = Math.round(size * 0.866);
+        for (let row = 0; row < h; row++) {
+            const halfW = Math.round((size / 2) * (1 - row / h));
+            for (let dx = -halfW; dx <= halfW; dx++)
+                paintPixel(cx + dx, cy - row + Math.round(h * 0.6), medIdx);
+        }
+        return;
+    }
+    const half = Math.round(size / 2);
+    const hq = Math.round(size * 0.866 / 2);
+    // Three sub-triangles: top, bottom-left, bottom-right
+    paintSierpinskiTriangle(cx, cy - hq, half, medIdx, depth - 1);
+    paintSierpinskiTriangle(cx - Math.round(half / 2), cy + Math.round(hq / 2), half, medIdx, depth - 1);
+    paintSierpinskiTriangle(cx + Math.round(half / 2), cy + Math.round(hq / 2), half, medIdx, depth - 1);
+}
+
+function kochPoints(x0, y0, x1, y1, depth) {
+    if (depth <= 0) return [[x0, y0]];
+    const dx = x1 - x0, dy = y1 - y0;
+    const ax = x0 + dx / 3, ay = y0 + dy / 3;
+    const bx = x0 + dx * 2 / 3, by = y0 + dy * 2 / 3;
+    const px = (x0 + x1) / 2 - dy * Math.sqrt(3) / 6;
+    const py = (y0 + y1) / 2 + dx * Math.sqrt(3) / 6;
+    return [
+        ...kochPoints(x0, y0, ax, ay, depth - 1),
+        ...kochPoints(ax, ay, px, py, depth - 1),
+        ...kochPoints(px, py, bx, by, depth - 1),
+        ...kochPoints(bx, by, x1, y1, depth - 1),
+    ];
+}
+
+function paintKochSnowflake(cx, cy, radius, medIdx, depth) {
+    if (radius < 3) { paintPixel(cx, cy, medIdx); return; }
+    // Three corners of equilateral triangle
+    const pts = [];
+    for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2 - Math.PI / 2;
+        pts.push([cx + radius * Math.cos(a), cy + radius * Math.sin(a)]);
+    }
+    // Build Koch curve for each side
+    const allPts = [];
+    for (let i = 0; i < 3; i++) {
+        const [x0, y0] = pts[i];
+        const [x1, y1] = pts[(i + 1) % 3];
+        allPts.push(...kochPoints(x0, y0, x1, y1, depth));
+    }
+    // Draw the outline
+    for (let i = 0; i < allPts.length; i++) {
+        const [ax, ay] = allPts[i];
+        const [bx, by] = allPts[(i + 1) % allPts.length];
+        paintShapeLine(Math.round(ax), Math.round(ay), Math.round(bx), Math.round(by), medIdx);
+    }
+}
+
 function paintStar(cx, cy, outerR, medIdx, filled) {
     if (outerR < 2) { paintPixel(cx, cy, medIdx); return; }
     const innerR = Math.round(outerR * 0.38);
@@ -831,6 +941,10 @@ function paintStar(cx, cy, outerR, medIdx, filled) {
 }
 
 function commitShape(x0, y0, x1, y1, medIdx) {
+    if (currentTool === 'source') {
+        commitSourceShape(x0, y0, x1, y1);
+        return;
+    }
     const dx = x1 - x0, dy = y1 - y0;
     switch (currentShape) {
         case 'line':          paintShapeLine(x0, y0, x1, y1, medIdx); break;
@@ -859,6 +973,21 @@ function commitShape(x0, y0, x1, y1, medIdx) {
         case 'filled-star': {
             const r = Math.round(Math.hypot(dx, dy));
             paintStar(x0, y0, r, medIdx, true); break;
+        }
+        case 'sierpinski-carpet': {
+            const size = Math.round(Math.max(Math.abs(dx), Math.abs(dy)) * 2);
+            const depth = size > 80 ? 4 : size > 30 ? 3 : size > 10 ? 2 : 1;
+            paintSierpinskiCarpet(x0, y0, size, medIdx, depth); break;
+        }
+        case 'sierpinski-triangle': {
+            const size = Math.round(Math.max(Math.abs(dx), Math.abs(dy)) * 2);
+            const depth = size > 80 ? 4 : size > 30 ? 3 : size > 10 ? 2 : 1;
+            paintSierpinskiTriangle(x0, y0, size, medIdx, depth); break;
+        }
+        case 'koch-snowflake': {
+            const r = Math.round(Math.hypot(dx, dy));
+            const depth = r > 60 ? 4 : r > 25 ? 3 : r > 10 ? 2 : 1;
+            paintKochSnowflake(x0, y0, r, medIdx, depth); break;
         }
     }
 }
@@ -942,11 +1071,189 @@ function drawPreview(x0, y0, x1, y1) {
             overlayCtx.stroke();
             break;
         }
+        case 'sierpinski-carpet': {
+            const sz = Math.max(Math.abs(dx), Math.abs(dy));
+            overlayCtx.strokeRect(x0 - sz + 0.5, y0 - sz + 0.5, sz * 2, sz * 2);
+            overlayCtx.fillStyle = 'rgba(88,166,255,0.08)';
+            overlayCtx.fillRect(x0 - sz, y0 - sz, sz * 2, sz * 2);
+            break;
+        }
+        case 'sierpinski-triangle': {
+            const sz = Math.max(Math.abs(dx), Math.abs(dy));
+            const h = sz * 0.866;
+            overlayCtx.beginPath();
+            overlayCtx.moveTo(x0 + 0.5, y0 - sz + 0.5);
+            overlayCtx.lineTo(x0 + sz + 0.5, y0 + h * 0.5 + 0.5);
+            overlayCtx.lineTo(x0 - sz + 0.5, y0 + h * 0.5 + 0.5);
+            overlayCtx.closePath();
+            overlayCtx.fillStyle = 'rgba(88,166,255,0.08)';
+            overlayCtx.fill();
+            overlayCtx.stroke();
+            break;
+        }
+        case 'koch-snowflake': {
+            const r = Math.hypot(dx, dy);
+            overlayCtx.beginPath();
+            overlayCtx.arc(x0 + 0.5, y0 + 0.5, r, 0, Math.PI * 2);
+            overlayCtx.stroke();
+            break;
+        }
     }
 }
 
 function clearOverlay() {
     overlayCtx.clearRect(0, 0, NX, NY);
+}
+
+// Place sources along a shape path
+function commitSourceShape(x0, y0, x1, y1) {
+    const dx = x1 - x0, dy = y1 - y0;
+    const pts = [];
+
+    switch (currentShape) {
+        case 'line': {
+            const steps = Math.max(Math.abs(dx), Math.abs(dy), 1);
+            for (let s = 0; s <= steps; s++) {
+                const t = s / steps;
+                pts.push([Math.round(x0 + dx * t), Math.round(y0 + dy * t)]);
+            }
+            break;
+        }
+        case 'rect': case 'filled-rect': {
+            const lx = Math.min(x0, x1), rx = Math.max(x0, x1);
+            const ly = Math.min(y0, y1), ry = Math.max(y0, y1);
+            if (currentShape === 'filled-rect') {
+                for (let y = ly; y <= ry; y++)
+                    for (let x = lx; x <= rx; x++) pts.push([x, y]);
+            } else {
+                for (let x = lx; x <= rx; x++) { pts.push([x, ly]); pts.push([x, ry]); }
+                for (let y = ly + 1; y < ry; y++) { pts.push([lx, y]); pts.push([rx, y]); }
+            }
+            break;
+        }
+        case 'circle': case 'filled-circle': {
+            const r = Math.round(Math.hypot(dx, dy));
+            if (r < 1) { pts.push([x0, y0]); break; }
+            if (currentShape === 'filled-circle') {
+                for (let dy2 = -r; dy2 <= r; dy2++)
+                    for (let dx2 = -r; dx2 <= r; dx2++)
+                        if (dx2 * dx2 + dy2 * dy2 <= r * r) pts.push([x0 + dx2, y0 + dy2]);
+            } else {
+                const steps = Math.max(r * 8, 16);
+                for (let s = 0; s < steps; s++) {
+                    const a = (s / steps) * Math.PI * 2;
+                    pts.push([x0 + Math.round(r * Math.cos(a)), y0 + Math.round(r * Math.sin(a))]);
+                }
+            }
+            break;
+        }
+        case 'ellipse': case 'filled-ellipse': {
+            const rx = Math.abs(dx), ry = Math.abs(dy);
+            if (currentShape === 'filled-ellipse') {
+                for (let dy2 = -ry; dy2 <= ry; dy2++)
+                    for (let dx2 = -rx; dx2 <= rx; dx2++)
+                        if (rx > 0 && ry > 0 && (dx2*dx2)/(rx*rx) + (dy2*dy2)/(ry*ry) <= 1)
+                            pts.push([x0 + dx2, y0 + dy2]);
+            } else {
+                const steps = Math.max(rx, ry, 1) * 8;
+                for (let s = 0; s < steps; s++) {
+                    const a = (s / steps) * Math.PI * 2;
+                    pts.push([x0 + Math.round(rx * Math.cos(a)), y0 + Math.round(ry * Math.sin(a))]);
+                }
+            }
+            break;
+        }
+        default:
+            // For other shapes just place at endpoints
+            pts.push([x0, y0]); pts.push([x1, y1]);
+            break;
+    }
+
+    // De-duplicate and place sources
+    const seen = new Set();
+    for (const [px, py] of pts) {
+        if (px < 1 || px >= NX - 1 || py < 1 || py >= NY - 1) continue;
+        const key = py * NX + px;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const exists = sources.some(s => s.x === px && s.y === py);
+        if (!exists) sources.push({ x: px, y: py, freq: frequency });
+    }
+    dirty = true;
+}
+
+function drawGrid() {
+    if (!gridEnabled) return;
+    overlayCtx.save();
+    overlayCtx.strokeStyle = 'rgba(88,166,255,0.18)';
+    overlayCtx.lineWidth = 0.5;
+    for (let x = gridSpacing; x < NX; x += gridSpacing) {
+        overlayCtx.beginPath();
+        overlayCtx.moveTo(x + 0.5, 0);
+        overlayCtx.lineTo(x + 0.5, NY);
+        overlayCtx.stroke();
+    }
+    for (let y = gridSpacing; y < NY; y += gridSpacing) {
+        overlayCtx.beginPath();
+        overlayCtx.moveTo(0, y + 0.5);
+        overlayCtx.lineTo(NX, y + 0.5);
+        overlayCtx.stroke();
+    }
+    overlayCtx.restore();
+}
+
+function drawSelectionRect() {
+    if (!selectionRect) return;
+    overlayCtx.save();
+    overlayCtx.strokeStyle = 'rgba(255,200,50,0.8)';
+    overlayCtx.setLineDash([3, 3]);
+    overlayCtx.lineWidth = 1;
+    overlayCtx.strokeRect(selectionRect.x + 0.5, selectionRect.y + 0.5, selectionRect.w, selectionRect.h);
+    overlayCtx.restore();
+}
+
+function drawPastePreview() {
+    if (!isPasting || !clipboard || !pastePreview) return;
+    overlayCtx.save();
+    overlayCtx.fillStyle = 'rgba(88,166,255,0.2)';
+    overlayCtx.strokeStyle = 'rgba(88,166,255,0.7)';
+    overlayCtx.setLineDash([2, 2]);
+    overlayCtx.lineWidth = 1;
+    overlayCtx.fillRect(pastePreview.x, pastePreview.y, clipboard.w, clipboard.h);
+    overlayCtx.strokeRect(pastePreview.x + 0.5, pastePreview.y + 0.5, clipboard.w, clipboard.h);
+    overlayCtx.restore();
+}
+
+function refreshOverlay() {
+    overlayCtx.clearRect(0, 0, NX, NY);
+    drawGrid();
+    drawSelectionRect();
+    drawPastePreview();
+}
+
+function copySelection() {
+    if (!selectionRect) return;
+    const { x, y, w, h } = selectionRect;
+    const data = new Uint8Array(w * h);
+    for (let dy = 0; dy < h; dy++)
+        for (let dx = 0; dx < w; dx++) {
+            const si = (y + dy) * NX + (x + dx);
+            data[dy * w + dx] = (si >= 0 && si < CELLS) ? medium[si] : DEFAULT_IDX;
+        }
+    clipboard = { w, h, data };
+}
+
+function pasteClipboard(px, py) {
+    if (!clipboard) return;
+    pushUndo();
+    const { w, h, data } = clipboard;
+    for (let dy = 0; dy < h; dy++)
+        for (let dx = 0; dx < w; dx++) {
+            const nx = px + dx, ny = py + dy;
+            if (nx < 1 || nx >= NX - 1 || ny < 1 || ny >= NY - 1) continue;
+            paintPixel(nx, ny, data[dy * w + dx]);
+        }
+    dirty = true;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1174,7 +1481,8 @@ function canvasCoord(e) {
 
 function isShapeMode() {
     return currentShape !== 'free' &&
-           (currentTool === 'paint' || currentTool === 'wall' || currentTool === 'erase');
+           currentTool !== 'select' &&
+           (currentTool === 'paint' || currentTool === 'wall' || currentTool === 'erase' || currentTool === 'source');
 }
 
 function getActiveMedium() {
@@ -1187,7 +1495,26 @@ canvas.addEventListener('mousedown', e => {
     e.preventDefault();
     mouseDown = true;
     mouseButton = e.button;
-    const [cx, cy] = canvasCoord(e);
+    let [cx, cy] = canvasCoord(e);
+    cx = snapToGrid(cx); cy = snapToGrid(cy);
+
+    // Paste mode: click to stamp
+    if (isPasting && clipboard && e.button !== 2) {
+        pasteClipboard(cx, cy);
+        isPasting = false;
+        pastePreview = null;
+        selectionRect = null;
+        refreshOverlay();
+        return;
+    }
+
+    // Select tool
+    if (currentTool === 'select' && e.button !== 2) {
+        selectAnchorX = cx; selectAnchorY = cy;
+        selectionRect = null;
+        syncOverlaySize();
+        return;
+    }
 
     if (isShapeMode() && e.button !== 2) {
         shapeAnchorX = cx; shapeAnchorY = cy;
@@ -1217,11 +1544,32 @@ canvas.addEventListener('mousedown', e => {
 });
 
 canvas.addEventListener('mousemove', e => {
+    let [cx, cy] = canvasCoord(e);
+    cx = snapToGrid(cx); cy = snapToGrid(cy);
+
+    // Paste preview follows mouse even when not dragging
+    if (isPasting && clipboard) {
+        pastePreview = { x: cx, y: cy };
+        syncOverlaySize();
+        refreshOverlay();
+    }
+
     if (!mouseDown) return;
-    const [cx, cy] = canvasCoord(e);
+
+    // Select drag
+    if (currentTool === 'select' && selectAnchorX >= 0 && mouseButton !== 2) {
+        selectionRect = {
+            x: Math.min(selectAnchorX, cx), y: Math.min(selectAnchorY, cy),
+            w: Math.abs(cx - selectAnchorX), h: Math.abs(cy - selectAnchorY)
+        };
+        syncOverlaySize();
+        refreshOverlay();
+        return;
+    }
 
     if (isShapeMode() && shapeAnchorX >= 0 && mouseButton !== 2) {
         drawPreview(shapeAnchorX, shapeAnchorY, cx, cy);
+        drawGrid();
         return;
     }
 
@@ -1240,11 +1588,27 @@ canvas.addEventListener('mousemove', e => {
 });
 
 canvas.addEventListener('mouseup', e => {
+    let [cx, cy] = canvasCoord(e);
+    cx = snapToGrid(cx); cy = snapToGrid(cy);
+
+    if (currentTool === 'select' && selectAnchorX >= 0 && mouseButton !== 2) {
+        selectionRect = {
+            x: Math.min(selectAnchorX, cx), y: Math.min(selectAnchorY, cy),
+            w: Math.abs(cx - selectAnchorX), h: Math.abs(cy - selectAnchorY)
+        };
+        if (selectionRect.w < 2 || selectionRect.h < 2) selectionRect = null;
+        selectAnchorX = -1; selectAnchorY = -1;
+        syncOverlaySize();
+        refreshOverlay();
+        mouseDown = false;
+        return;
+    }
+
     if (isShapeMode() && shapeAnchorX >= 0 && mouseButton !== 2) {
-        const [cx, cy] = canvasCoord(e);
         pushUndo();
         commitShape(shapeAnchorX, shapeAnchorY, cx, cy, getActiveMedium());
         clearOverlay();
+        refreshOverlay();
         dirty = true;
     }
     mouseDown = false;
@@ -1255,7 +1619,8 @@ canvas.addEventListener('mouseleave', () => {
     mouseDown = false;
     lastPaintX = -1; lastPaintY = -1;
     shapeAnchorX = -1; shapeAnchorY = -1;
-    clearOverlay();
+    selectAnchorX = -1; selectAnchorY = -1;
+    refreshOverlay();
 });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
@@ -1272,7 +1637,22 @@ canvas.addEventListener('touchstart', e => {
     e.preventDefault();
     mouseDown = true;
     mouseButton = 0;
-    const [cx, cy] = touchCoord(e);
+    let [cx, cy] = touchCoord(e);
+    cx = snapToGrid(cx); cy = snapToGrid(cy);
+
+    if (isPasting && clipboard) {
+        pasteClipboard(cx, cy);
+        isPasting = false; pastePreview = null; selectionRect = null;
+        refreshOverlay();
+        return;
+    }
+
+    if (currentTool === 'select') {
+        selectAnchorX = cx; selectAnchorY = cy;
+        selectionRect = null;
+        syncOverlaySize();
+        return;
+    }
 
     if (isShapeMode()) {
         shapeAnchorX = cx; shapeAnchorY = cy;
@@ -1304,10 +1684,21 @@ canvas.addEventListener('touchstart', e => {
 canvas.addEventListener('touchmove', e => {
     e.preventDefault();
     if (!mouseDown) return;
-    const [cx, cy] = touchCoord(e);
+    let [cx, cy] = touchCoord(e);
+    cx = snapToGrid(cx); cy = snapToGrid(cy);
+
+    if (currentTool === 'select' && selectAnchorX >= 0) {
+        selectionRect = {
+            x: Math.min(selectAnchorX, cx), y: Math.min(selectAnchorY, cy),
+            w: Math.abs(cx - selectAnchorX), h: Math.abs(cy - selectAnchorY)
+        };
+        syncOverlaySize(); refreshOverlay();
+        return;
+    }
 
     if (isShapeMode() && shapeAnchorX >= 0) {
         drawPreview(shapeAnchorX, shapeAnchorY, cx, cy);
+        drawGrid();
         return;
     }
 
@@ -1327,11 +1718,26 @@ canvas.addEventListener('touchmove', e => {
 
 canvas.addEventListener('touchend', e => {
     e.preventDefault();
+    let [cx, cy] = touchCoord(e);
+    cx = snapToGrid(cx); cy = snapToGrid(cy);
+
+    if (currentTool === 'select' && selectAnchorX >= 0) {
+        selectionRect = {
+            x: Math.min(selectAnchorX, cx), y: Math.min(selectAnchorY, cy),
+            w: Math.abs(cx - selectAnchorX), h: Math.abs(cy - selectAnchorY)
+        };
+        if (selectionRect.w < 2 || selectionRect.h < 2) selectionRect = null;
+        selectAnchorX = -1; selectAnchorY = -1;
+        syncOverlaySize(); refreshOverlay();
+        mouseDown = false;
+        return;
+    }
+
     if (isShapeMode() && shapeAnchorX >= 0) {
-        const [cx, cy] = touchCoord(e);
         pushUndo();
         commitShape(shapeAnchorX, shapeAnchorY, cx, cy, getActiveMedium());
         clearOverlay();
+        refreshOverlay();
         dirty = true;
     }
     mouseDown = false;
@@ -1344,6 +1750,29 @@ document.addEventListener('keydown', e => {
     if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
     if ((e.ctrlKey || e.metaKey) && ((e.shiftKey && e.key.toLowerCase() === 'z') || e.key.toLowerCase() === 'y')) { e.preventDefault(); redo(); return; }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        copySelection();
+        return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        if (clipboard) { isPasting = true; pastePreview = null; }
+        return;
+    }
+    if (e.key === 'Escape') {
+        isPasting = false; pastePreview = null;
+        selectionRect = null;
+        refreshOverlay();
+        return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        gridEnabled = !gridEnabled;
+        document.getElementById('chk-grid').checked = gridEnabled;
+        syncOverlaySize(); refreshOverlay();
+        return;
+    }
     switch (e.key) {
         case ' ': e.preventDefault(); togglePlay(); break;
         case 'r': case 'R':
@@ -1452,6 +1881,16 @@ document.getElementById('btn-clear').addEventListener('click', () => {
 });
 document.getElementById('btn-undo').addEventListener('click', undo);
 document.getElementById('btn-redo').addEventListener('click', redo);
+
+document.getElementById('chk-grid').addEventListener('change', e => {
+    gridEnabled = e.target.checked;
+    syncOverlaySize(); refreshOverlay();
+});
+document.getElementById('rng-grid').addEventListener('input', e => {
+    gridSpacing = parseInt(e.target.value);
+    document.getElementById('val-grid').textContent = gridSpacing;
+    syncOverlaySize(); refreshOverlay();
+});
 
 // ═══════════════════════════════════════════════════════════════════════
 //  ANIMATION LOOP
