@@ -1,0 +1,164 @@
+═══════════════════════════════════════════════════════════════════════
+  THE WAVE EQUATION — From Newton's Laws to Universal Wave Physics
+═══════════════════════════════════════════════════════════════════════
+
+  The wave equation is arguably the most important PDE in physics.
+  It governs sound, light, water waves, earthquakes, and vibrating
+  strings. Here's where it comes from.
+
+───────────────────────────────────────────────────────────────────────
+  DERIVATION: THE VIBRATING STRING
+───────────────────────────────────────────────────────────────────────
+
+  Consider a string stretched between two fixed points with tension T
+  and linear mass density μ (kg/m).
+
+  Take a tiny element of length dx. If the string is displaced
+  vertically by u(x, t), the net vertical force on this element is:
+
+      F = T · sin(θ₂) − T · sin(θ₁)
+
+  For small displacements, sin(θ) ≈ tan(θ) = ∂u/∂x, so:
+
+      F ≈ T · [∂u/∂x|_{x+dx} − ∂u/∂x|_x]
+        = T · (∂²u/∂x²) · dx
+
+  Newton's second law: F = m · a = (μ · dx) · (∂²u/∂t²)
+
+  Setting them equal:
+
+      (μ · dx) · ∂²u/∂t² = T · (∂²u/∂x²) · dx
+
+  Cancel dx:
+
+      ∂²u/∂t² = (T/μ) · ∂²u/∂x²
+
+  Define c² = T/μ, and we have it:
+
+      ┌─────────────────────────────────┐
+      │  ∂²u/∂t² = c² · ∂²u/∂x²       │
+      │                                 │
+      │  The 1D wave equation           │
+      │  c = wave speed = √(T/μ)       │
+      └─────────────────────────────────┘
+
+───────────────────────────────────────────────────────────────────────
+  WHAT c MEANS IN DIFFERENT MEDIA
+───────────────────────────────────────────────────────────────────────
+
+  The equation is UNIVERSAL. Only c changes:
+
+  SOUND IN AIR:
+      c = √(γ·P/ρ) ≈ 343 m/s
+      γ = adiabatic index (1.4 for air)
+      P = pressure, ρ = density
+
+  SOUND IN WATER:
+      c ≈ 1500 m/s  (4× faster than air — water is stiffer)
+
+  LIGHT IN VACUUM:
+      c = 1/√(ε₀·μ₀) = 299,792,458 m/s
+      ε₀ = electric permittivity
+      μ₀ = magnetic permeability
+
+  LIGHT IN GLASS:
+      c = c₀/n ≈ 200,000,000 m/s
+      n = refractive index (≈1.5 for glass)
+
+  SHALLOW WATER WAVES:
+      c = √(g·h)
+      g = 9.81 m/s², h = water depth
+      Deep ocean (4000m): c ≈ 200 m/s
+      Coastal (10m):      c ≈ 10 m/s
+
+  SEISMIC P-WAVES:
+      c ≈ 5000–8000 m/s (depends on rock type)
+
+  The SAME equation. The SAME solutions. The SAME numerical methods.
+  Only the speed changes.
+
+───────────────────────────────────────────────────────────────────────
+  THE 2D WAVE EQUATION
+───────────────────────────────────────────────────────────────────────
+
+  In two dimensions:
+
+      ∂²u/∂t² = c² · (∂²u/∂x² + ∂²u/∂y²)
+
+  Or in compact notation:
+
+      ∂²u/∂t² = c² · ∇²u
+
+  where ∇² is the Laplacian operator. This governs:
+  - A vibrating membrane (drumhead)
+  - Surface water waves
+  - Electromagnetic waves in a plane
+  - Seismic waves across Earth's surface
+
+───────────────────────────────────────────────────────────────────────
+  D'ALEMBERT'S SOLUTION (1D)
+───────────────────────────────────────────────────────────────────────
+
+  The general solution to the 1D wave equation is:
+
+      u(x, t) = f(x − ct) + g(x + ct)
+
+  Two waves: one moving RIGHT at speed c, one moving LEFT at speed c.
+  f and g can be ANY shape — the wave equation preserves them.
+
+  This is why a guitar string vibration splits into two pulses
+  traveling in opposite directions. It's also why repo 3's
+  bidirectional wavefront search works: two wavefronts meeting
+  in the middle.
+
+───────────────────────────────────────────────────────────────────────
+  BOUNDARY CONDITIONS — WHERE WAVEGUIDES BEGIN
+───────────────────────────────────────────────────────────────────────
+
+  A wave in free space just propagates forever. Put BOUNDARIES on it,
+  and everything changes:
+
+  FIXED (DIRICHLET): u = 0 at the boundary
+    → String clamped at both ends
+    → Sound at a closed pipe end
+    → Wave reflects with a PHASE FLIP (inverted)
+
+  FREE (NEUMANN): ∂u/∂n = 0 at the boundary
+    → String free to slide on a ring
+    → Sound at an open pipe end
+    → Wave reflects WITHOUT phase flip
+
+  IMPEDANCE MISMATCH: partial reflection + partial transmission
+    → Light entering glass from air
+    → Sound going from air into water
+    → Tsunami hitting shallow water
+
+  These boundary conditions create WAVEGUIDES: structures that
+  confine and guide waves. A pipe guides sound. A fiber guides
+  light. An ocean trench guides tsunamis.
+
+───────────────────────────────────────────────────────────────────────
+  THE CONNECTION TO PREVIOUS REPOS
+───────────────────────────────────────────────────────────────────────
+
+  REPO 1 (Bit Tricks):
+    IEEE 754 discretizes real numbers into finite bits.
+    FDTD discretizes continuous waves into finite grid points.
+    Both face the same tradeoff: precision vs. storage.
+    Both exploit structure in the representation.
+
+  REPO 2 (Wave Functions):
+    Fourier decomposes signals into frequency components.
+    A waveguide only allows certain frequencies (modes).
+    The FFT from repo 2 is how we ANALYZE which modes exist.
+    The Nyquist theorem sets our minimum grid resolution.
+
+  REPO 3 (Pathfinding):
+    Wave propagation IS pathfinding (Eikonal equation).
+    The arrival time of a tsunami wavefront at a coastline
+    is the SAME computation as finding the shortest path
+    through a weighted graph where edge cost = 1/wave_speed.
+    Huygens' principle from repo 3's wave propagation script
+    is the foundation of wave simulation.
+
+  This repo shows the physical waves that those tools describe.

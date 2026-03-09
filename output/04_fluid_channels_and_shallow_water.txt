@@ -1,0 +1,595 @@
+
+========================================================================
+  FLUID CHANNELS AND SHALLOW WATER
+  Tsunamis, tides, and the ocean as a waveguide
+========================================================================
+
+========================================================================
+  PART 1: THE SHALLOW WATER EQUATIONS
+  Why depth controls everything
+========================================================================
+
+    For water waves much LONGER than the water is DEEP:
+
+        wavelength >> depth     (λ/h > ~20)
+
+    The full Navier-Stokes equations simplify to:
+
+        MOMENTUM:    ∂u/∂t = −g · ∂η/∂x
+                     ∂v/∂t = −g · ∂η/∂y
+
+        CONTINUITY:  ∂η/∂t = −∂(h·u)/∂x − ∂(h·v)/∂y
+
+    For small waves (η << h), these combine into a WAVE EQUATION:
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │                                                             │
+    │   ∂²η/∂t² = c² · ∇²η     where c = √(g·h)                │
+    │                                                             │
+    │   g = 9.81 m/s²                                            │
+    │   h = water depth                                           │
+    │   η = surface elevation above mean                          │
+    │                                                             │
+    └─────────────────────────────────────────────────────────────┘
+
+    THE SAME wave equation from scripts 01-03. Only now:
+      • c depends on h (depth) instead of n (index) or T/μ (tension)
+      • The "waveguide" is the ocean floor topography
+    
+    Wave speed c = √(g·h) at various depths:
+
+         Depth    c (m/s)   c (km/h) Comparable to
+    ────────── ────────── ────────── ─────────────────────────
+           1 m      3.1       11 walking
+          10 m      9.9       36 car in city
+          50 m     22.1       80 highway driving
+         200 m     44.3      159 highway driving
+        1000 m     99.0      357 high-speed rail
+        4000 m    198.1      713 commercial aircraft
+       10000 m    313.2     1128 supersonic jet
+
+    A tsunami in the deep ocean (h = 4000m) moves at 713 km/h —
+    as fast as a commercial jet. But in shallow coastal water
+    (h = 10m), it crawls at 36 km/h.
+
+    Key insight: the tsunami doesn't "slow down" because something
+    is in the way. It slows down because the PHYSICS changes —
+    the wave speed is determined by the depth. The ocean floor
+    IS the waveguide, shaping the wave as it propagates.
+    
+
+========================================================================
+  PART 2: SHOALING
+  Why a barely-noticeable deep-ocean wave becomes a wall of water
+========================================================================
+
+    Conservation of energy flux:
+
+        E · c_g = constant along a wave ray
+
+    where E ∝ A² (energy scales as amplitude squared).
+    As the wave enters shallower water, c_g decreases,
+    so A must INCREASE.
+
+    The amplification factor (Green's law):
+
+        A_shallow / A_deep ≈ (h_deep / h_shallow)^(1/4)
+    
+    Tsunami approaching shore (A_deep = 0.5 m at h = 4000 m):
+
+         Depth    c (m/s)   Amplitude (m)   Amplification
+    ────────── ────────── ─────────────── ───────────────
+        4000 m    198.1          0.50           1.0×
+        1000 m     99.0          0.71           1.4×
+         200 m     44.3          1.06           2.1×
+          50 m     22.1          1.50           3.0×
+          10 m      9.9          2.24           4.5×
+           5 m      7.0          2.66           5.3×
+           2 m      4.4          3.34           6.7× ← DANGER
+           1 m      3.1          3.98           8.0× ← DANGER
+
+    At 10m depth: the 0.5m wave has grown to 2.2m
+    At 1m depth:  4.0m — and this is GREEN'S LAW, the MINIMUM
+
+    Real amplification can be much worse due to:
+      • Bathymetric focusing (underwater ridges concentrate energy)
+      • Harbor resonance (trapped waves amplify)
+      • Wave breaking and runup (adds more height)
+
+    The 2011 Tōhoku tsunami reached 40.5m at maximum runup.
+    
+    Amplitude amplification as depth decreases:
+
+       3.976 ┤                                                    ████
+             ┤                                                 ███│   
+             ┤                                             ████│      
+             ┤                                        █████│          
+       2.238 ┤                                   █████│               
+             ┤                           ████████│                    
+             ┤                 ██████████│                            
+             ┤ ████████████████│                                      
+       0.500 ┤█│                                                      
+             └────────────────────────────────────────────────────────
+                Wave amplitude (m) vs. decreasing depth (4000m → 1m)
+
+    The curve is gentle at first — barely noticeable in deep water.
+    Then it ROCKETS up as the depth drops below ~50m.
+    Ships in the deep ocean don't even notice a tsunami passing
+    beneath them. But at the coast, it's catastrophic.
+
+    This is the same physics as impedance mismatch (script 01,03):
+    the energy is CONSERVED, but squeezed into a smaller "channel"
+    (shallower water), so the amplitude must increase.
+    
+
+========================================================================
+  PART 3: BATHYMETRIC REFRACTION
+  The ocean floor bends waves like a glass lens
+========================================================================
+
+    Since c = √(g·h), waves traveling over varying depth REFRACT.
+    Snell's law applies:
+
+        sin(θ₁)/c₁ = sin(θ₂)/c₂  =  sin(θ₁)/√(g·h₁) = sin(θ₂)/√(g·h₂)
+
+    This is the EXACT same Snell's law from optical fibers (script 03)!
+    Replace refractive index n with 1/√(h).
+
+    ┌──────────────────────────────────────────────────────────────────┐
+    │  Optics:   n₁·sin(θ₁) = n₂·sin(θ₂)       n = c₀/c            │
+    │  Water:    sin(θ₁)/c₁ = sin(θ₂)/c₂        c = √(g·h)         │
+    │                                                                 │
+    │  The ocean floor is to water waves what glass is to light.     │
+    │  Depth variations = refractive index variations.               │
+    └──────────────────────────────────────────────────────────────────┘
+    
+    ── Why waves arrive parallel to shore ──
+
+    Imagine waves approaching a straight beach at an angle.
+    The part of the wavefront in DEEPER water travels FASTER.
+    The part in SHALLOWER water lags behind.
+    The wavefront ROTATES to become parallel to the shore.
+
+    Depth contours:        Wavefront bending:
+    ═══════════════        ════════════════════
+    │ 100m deep  │         │    /← fast       │
+    │  50m deep  │    →    │   /  (deep)      │
+    │  20m deep  │         │  / ← slowing     │
+    │  10m deep  │         │ /   (shallow)    │
+    │   5m deep  │         │/← nearly parallel│
+    │▓▓ BEACH ▓▓│         │▓▓▓ BEACH ▓▓▓▓▓▓▓│
+    
+    Wave approaching at 45.0° in 100.0m water:
+
+         Depth    c (m/s)   Wave angle Turns toward shore
+    ────────── ────────── ──────────── ────────────────────
+         100 m     31.3       45.0°                0.0°
+          50 m     22.1       30.0°               15.0°
+          20 m     14.0       18.4°               26.6°
+          10 m      9.9       12.9°               32.1°
+           5 m      7.0        9.1°               35.9°
+           2 m      4.4        5.7°               39.3°
+
+    By the time the wave reaches 2m depth, it has rotated from 45°
+    to less than 10° — nearly parallel to shore. This is why
+    waves ALWAYS seem to arrive roughly perpendicular to the beach,
+    regardless of the deep-water wave direction.
+
+    SAME physics as light bending through a gradient-index lens.
+    The ocean floor is nature's optical element.
+    
+
+========================================================================
+  PART 4: COASTAL WAVEGUIDES
+  How coastline shape traps and guides waves
+========================================================================
+
+    The concept: just as a fiber optic cable traps light between
+    core (high n → slow) and cladding (low n → fast), the coast
+    can trap water waves between:
+
+      • Shore (shallow → slow waves) = "core"
+      • Deep ocean (deep → fast waves) = "cladding"
+
+    Waves that approach at shallow angles to the coastline get
+    REFRACTED back toward shore by the depth gradient — total
+    internal reflection, ocean-style.
+
+    These are EDGE WAVES: they propagate ALONG the coast, trapped
+    between the beach and the deep ocean.
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  COASTAL TRAPPING (water) ↔ FIBER MODE (light)             │
+    │                                                             │
+    │  Shore (slow) → traps wave  ↔  Core (slow) → traps light  │
+    │  Deep water (fast) → barrier ↔  Clad (fast) → barrier      │
+    │  Depth gradient → refraction ↔  Index step → TIR           │
+    └─────────────────────────────────────────────────────────────┘
+    
+    ── Edge wave mode profile (amplitude vs. distance from shore) ──
+
+       1.000 ┤██│                                                     
+             ┤  ██│                                                   
+             ┤    ██│                                                 
+       0.418 ┤      ██│                                               
+             ┤        ███│                                            
+             ┤···········█████████████████████████████████████████████
+      -0.164 ┤                                                        
+             └────────────────────────────────────────────────────────
+                        Edge wave mode 0: trapped near shore
+
+       1.000 ┤█│                                                      
+             ┤ █│                                                     
+             ┤  █│                                                    
+       0.418 ┤   █│                                                   
+             ┤    ██│                                                 
+             ┤······██████████████████████████████████████████████████
+      -0.164 ┤                                                        
+             └────────────────────────────────────────────────────────
+                        Edge wave mode 1: trapped near shore
+
+       1.000 ┤█│                                                      
+             ┤ █│                                                     
+             ┤  │                                                     
+       0.418 ┤  █│                                                    
+             ┤   █│                                                   
+             ┤····████████████████████████████████████████████████████
+      -0.164 ┤                                                        
+             └────────────────────────────────────────────────────────
+                        Edge wave mode 2: trapped near shore
+
+    The wave amplitude is concentrated near the shore and decays
+    exponentially offshore — exactly like the evanescent field
+    in a fiber's cladding (script 03).
+
+    Edge waves are responsible for:
+      • Rip current spacing along beaches
+      • Periodic flooding patterns
+      • Harbor oscillations (seiches)
+
+    The coastline SHAPE determines which edge wave modes can exist,
+    just as the fiber core diameter determines optical modes.
+    
+
+========================================================================
+  PART 5: 1D TSUNAMI PROPAGATION
+  A wave crossing from deep to shallow water
+========================================================================
+
+    Let's simulate a tsunami crossing a 1D ocean profile:
+    deep ocean → continental shelf → coast.
+    
+    Ocean depth profile:
+
+    4000.000 ┤███████████████████████████████████│                    
+             ┤                                   █│                   
+             ┤                                    ██│                 
+             ┤                                      █│                
+    2002.500 ┤                                       ██│              
+             ┤                                         █│             
+             ┤                                          ██│           
+             ┤                                            ███████████│
+       5.000 ┤                                                       █
+             └────────────────────────────────────────────────────────
+                 Depth (m) over 500 km — deep ocean → shelf → coast
+
+    Wave speed profile:
+
+     198.091 ┤█████████████████████████████████████│                  
+             ┤                                     ███│               
+             ┤                                        ██│             
+     102.547 ┤                                          ██│           
+             ┤                                            ██████████│ 
+             ┤                                                      █│
+       7.004 ┤                                                       █
+             └────────────────────────────────────────────────────────
+              c = √(g·h) in m/s — fast in deep water, slow near shore
+
+    Tsunami propagation (source at 50 km):
+
+       0.500 ┤     ██│                                                
+             ┤    █│ █│                                               
+             ┤   █│   █│                                              
+       0.250 ┤   │     │                                              
+             ┤  █│     █│                                             
+             ┤██│       ███████████████│                              
+       0.000 ┤                         ███████████████████████████████
+             └────────────────────────────────────────────────────────
+                                 t = 0 min — source
+
+       0.250 ┤                ██│                                     
+             ┤               █│ █│                                    
+             ┤              █│   █│                                   
+       0.125 ┤              │     │                                   
+             ┤             █│     █│                                  
+             ┤█████████████│       ███████████████│                   
+       0.000 ┤                                    ████████████████████
+             └────────────────────────────────────────────────────────
+                    t = 8 min — crossing deep ocean at ~200 m/s
+
+       0.248 ┤                               ██│                      
+             ┤                              █│ █│                     
+             ┤                              │   █│                    
+       0.124 ┤                             █│    │                    
+             ┤                            █│     █│                   
+             ┤████████████████████████████│       ████████│           
+       0.000 ┤                                            ████████████
+             └────────────────────────────────────────────────────────
+                    t = 20 min — crossing deep ocean at ~200 m/s
+
+       0.120 ┤                                                        
+             ┤                                           ██│          
+             ┤                                           │ │          
+       0.048 ┤                                           │ │          
+             ┤██████████████████│                       █│ █│         
+             ┤··················████████████████████████····██████████
+      -0.023 ┤                                                        
+             └────────────────────────────────────────────────────────
+                     t = 33 min — slowing on continental slope
+
+       0.113 ┤                                                        
+             ┤                                                ██│     
+             ┤                                                │ │     
+       0.039 ┤                                                │ │     
+             ┤████████························████████████████··██████
+             ┤        ████████████████████████│                       
+      -0.035 ┤                                                        
+             └────────────────────────────────────────────────────────
+                     t = 50 min — slowing on continental slope
+
+       0.101 ┤                                                        
+             ┤                                                     █│ 
+             ┤                                                     ││ 
+       0.033 ┤                                                     │█│
+             ┤··········███████████████████████████████████████████··█
+             ┤██████████│                                             
+      -0.035 ┤                                                        
+             └────────────────────────────────────────────────────────
+                        t = 67 min — amplifying near coast!
+
+
+    Watch the wave:
+      1. Starts as a 0.5m pulse in the deep ocean
+      2. Crosses 300 km of deep ocean at ~200 m/s (jet speed)
+      3. Hits the continental slope — SLOWS dramatically
+      4. Wavelength COMPRESSES (wave bunches up)
+      5. Amplitude GROWS (energy squeezed into less water)
+      6. Reflects off the coastline
+
+    This is the full shoaling + refraction process from a single
+    simulation. The same FDTD method from script 01, with
+    c(x) = √(g·h(x)) instead of constant c.
+    
+
+========================================================================
+  PART 6: THE EIKONAL EQUATION
+  Wave propagation IS pathfinding (repo 3 connection)
+========================================================================
+
+    In the high-frequency limit, the wave equation becomes:
+
+        |∇T(x,y)| = 1/c(x,y)
+
+    This is the EIKONAL EQUATION. T(x,y) is the ARRIVAL TIME of the
+    wavefront at each point.
+
+    This is EXACTLY the same as:
+      • Repo 3's weighted wave propagation
+      • Dijkstra's algorithm with edge cost = distance/c
+      • The Fast Marching Method
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  tsunami arrival time at (x,y) = shortest travel time      │
+    │  from earthquake source, where speed = √(g·h(x,y))        │
+    │                                                             │
+    │  This IS pathfinding. The "cost" is 1/c at each point.     │
+    │                                                             │
+    │  Repo 3's Eikonal script was solving tsunami propagation!  │
+    └─────────────────────────────────────────────────────────────┘
+    
+    Tsunami arrival time (Eikonal solution):
+
+      78.422 ┤                                                      ██
+             ┤                                                   ███│ 
+             ┤                                                ███│    
+             ┤                                             ███│       
+      39.211 ┤                                        █████│          
+             ┤                             ███████████│               
+             ┤               ██████████████│                          
+             ┤ ██████████████│                                        
+       0.000 ┤█│                                                      
+             └────────────────────────────────────────────────────────
+                Arrival time (minutes) from source at 50 km to coast
+
+           Location   Distance    Depth    Arrival
+    ─────────────── ────────── ──────── ──────────
+             Source       50 km   4000 m      0.0 min
+          Mid-ocean      200 km   4000 m     12.6 min
+         Shelf edge      300 km   3989 m     21.0 min
+        Inner shelf      400 km    200 m     35.0 min
+              Coast      490 km     98 m     69.6 min
+
+    The arrival time curve is NONLINEAR:
+      • Fast across the deep ocean (steep = rapid progress)
+      • Flattens on the shelf (wave slows down)
+      • Very flat at the coast (the wave crawls the last few km)
+
+    If you draw arrival time CONTOURS on a 2D ocean map,
+    you get exactly the wavefronts. And computing those contours
+    is EXACTLY Dijkstra's algorithm (repo 3), where:
+      • Each point is a "node"
+      • Edge cost = distance / c(x,y) = transit time
+      • The "shortest path" IS the earliest arrival
+    
+
+========================================================================
+  PART 7: 2D SHALLOW WATER WAVES
+  Waves over varying bathymetry
+========================================================================
+
+    Now the full 2D case: waves propagating over a sea floor
+    with varying depth. The wave equation:
+
+        ∂²η/∂t² = ∇·(c²(x,y) · ∇η)    where c = √(g·h)
+
+    With c varying spatially, the wave refracts and focuses.
+    
+    Bathymetry (depth in m — darker = deeper):
+
+    ┌──────────────────────────────────────────────────┐
+    │@###******+++++++;;;;;;;;::::::::::··········     │
+    │####******+++++++;;;;;;;;::::::::::··········     │
+    │####******+++++++;;;;;;;;::::::::::··········     │
+    │####******+++++++;;;;;;;;::::::::::··········     │
+    │####******+++++++;;;;;;;;::::::::::··········     │
+    │####******+++++++;;;;;;;;::::::::::··········     │
+    │###*****+++++++;;;;;;;;::::::::::···········      │
+    │***++++++;;;;;;::::::::::::·············          │
+    │++;;;;;:::::::··············                      │
+    │++;;;;::::::···············                       │
+    │**+++++;;;;;;;::::::::::··············            │
+    │##*****+++++++;;;;;;;;;::::::::::··········       │
+    │####*****++++++++;;;;;;;;::::::::::··········     │
+    │####******+++++++;;;;;;;;::::::::::··········     │
+    │####******+++++++;;;;;;;;::::::::::··········     │
+    │####******+++++++;;;;;;;;::::::::::··········     │
+    │####******+++++++;;;;;;;;::::::::::··········     │
+    │@###******+++++++;;;;;;;;::::::::::··········     │
+    └──────────────────────────────────────────────────┘
+     Depth: deep (left/dark) → shallow (right/light), ridge in center
+
+    Simulating 2D tsunami over variable bathymetry...
+
+    ┌──────────────────────────────────────────────────┐
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    │··:::;;::··                                       │
+    │:;+*###**;:··                                     │
+    │:;+*###**+::·                                     │
+    │··:;;;;;;:··                                      │
+    │    ···                                           │
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    └──────────────────────────────────────────────────┘
+                     Step 0 (t ≈ 0 min)
+
+    ┌──────────────────────────────────────────────────┐
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    │:::::······                                       │
+    │****+++;;;::···                                   │
+    │#####**++;;;;::··                                 │
+    │###**+;::;;+;;::·                                 │
+    │;;;;:  · ·:;+;;:·                                 │
+    │;;;:· ··· :;++;:·                                 │
+    │****+;::::;;;;;:·                                 │
+    │#####*++++;;;;:··                                 │
+    │*****++;;;;::··                                   │
+    │;;::::::····                                      │
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    │                                                  │
+    └──────────────────────────────────────────────────┘
+                    Step 40 (t ≈ 3 min)
+
+    ┌──────────────────────────────────────────────────┐
+    │········                                          │
+    │:::::::···                                        │
+    │******+++;:::···                                  │
+    │########**++;;:::·                                │
+    │************+++;;::··                             │
+    │    ··::;;;++++++;;::··                           │
+    │;;;;:··  ··:::;;;+;;::·                           │
+    │###*+;:·      ·;;++;::·                           │
+    │####*;;· ·· :· ;+*++::·                           │
+    │####*+;· ·· :: ;+*++:·                            │
+    │###**;:·      ·;;++;::·                           │
+    │+++;;:·   ··:::;;+;;::·                           │
+    │      ·::;;;;;;+++;;:··                           │
+    │+++++*******++++;;::··                            │
+    │#########**++;;::··                               │
+    │####***+++;;::···                                 │
+    │;;;;::::····                                      │
+    │········                                          │
+    └──────────────────────────────────────────────────┘
+                    Step 80 (t ≈ 6 min)
+
+    ┌──────────────────────────────────────────────────┐
+    │*****#####@###**+;;:···                           │
+    │+++++*****##***++;;::··                           │
+    │········:::::;;;;;::::···                         │
+    │              ··:::::::····                       │
+    │:::::::::···     ···:::::···                      │
+    │::::::::::····     ····::···                      │
+    │·····:::::····      ···:::··                      │
+    │······::::::··       ·::::··                      │
+    │·····::::::::· ·· ·  ·;;;:·                       │
+    │·····::::::::· ·· ·· :;;;:·                       │
+    │······::::::··       ·::::··                      │
+    │·····::::::···      ···:::··                      │
+    │···:::::::····     ····:::··                      │
+    │:::::::::····    ·····:::···                      │
+    │·········      ··:::::::···                       │
+    │      ······:::::::::::··                         │
+    │+++++++********++;;::··                           │
+    │*****#####@###**+;;:···                           │
+    └──────────────────────────────────────────────────┘
+                   Step 130 (t ≈ 10 min)
+
+
+    Watch the wavefront:
+      • Starts circular from the source (Huygens' principle)
+      • Moves faster in deep water (left), slower in shallow (right)
+      • The submarine ridge FOCUSES the wave (acts like a lens)
+      • The wavefront curves and distorts over the varying depth
+
+    This is bathymetric refraction in action — the same physics as
+    light through a gradient-index medium. The ridge acts like a
+    convex lens, focusing energy toward specific coastal areas.
+
+    Some coastlines receive MORE energy because of this focusing.
+    That's why tsunami damage isn't uniform along a coast — the
+    underwater topography determines who gets hit hardest.
+    
+
+========================================================================
+  SUMMARY: FLUID WAVEGUIDES
+========================================================================
+
+    This script explored water waves shaped by depth:
+
+      ✓ Shallow water equations: c = √(g·h) — depth controls speed
+      ✓ Shoaling: waves grow as depth decreases (energy conservation)
+      ✓ Bathymetric refraction: Snell's law for ocean waves
+      ✓ Coastal waveguides: shoreline traps edge waves
+      ✓ 1D tsunami simulation: deep → shelf → coast amplification
+      ✓ Eikonal equation: tsunami arrival time = shortest path (repo 3)
+      ✓ 2D simulation: wavefronts bending over bathymetry
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  THREE media, ONE equation:                                 │
+    │                                                             │
+    │  Sound: c = √(γP/ρ)     → pipe walls confine              │
+    │  Light: c = c₀/n         → index step confines             │
+    │  Water: c = √(g·h)       → depth profile confines          │
+    │                                                             │
+    │  NEXT: Script 05 — the NUMERICAL METHODS that let us       │
+    │  simulate all of these on a computer.                       │
+    └─────────────────────────────────────────────────────────────┘
+    
+
+========================================================================
+  Done. Run 05_numerical_methods.py next.
+========================================================================

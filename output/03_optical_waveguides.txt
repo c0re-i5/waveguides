@@ -1,0 +1,580 @@
+
+========================================================================
+  OPTICAL WAVEGUIDES — Light in Fibers
+  Total internal reflection and the backbone of the internet
+========================================================================
+
+========================================================================
+  PART 1: SNELL'S LAW
+  Why light bends at interfaces
+========================================================================
+
+    When light crosses from one medium to another, it changes
+    direction. This is REFRACTION, governed by Snell's law:
+
+        n₁ · sin(θ₁) = n₂ · sin(θ₂)
+
+    where:
+      n₁, n₂ = refractive indices (how much the medium slows light)
+      θ₁ = angle of incidence (from the normal)
+      θ₂ = angle of refraction
+
+    The refractive index n = c₀/c where c₀ is the speed of light
+    in vacuum. Higher n → slower light → more bending.
+    
+    Material                      n    Light speed (m/s)    % of c₀
+    ──────────────────────── ────── ──────────────────── ──────────
+    Vacuum                    1.000     299,792,458.0    100.0%
+    Air                       1.000 299,702,547.23582923    100.0%
+    Water                     1.333 224,900,568.64216053     75.0%
+    Fused silica (fiber)      1.458 205,618,969.82167354     68.6%
+    Crown glass               1.520 197,231,880.2631579     65.8%
+    Flint glass               1.620 185,057,072.83950615     61.7%
+    Diamond                   2.417 124,034,943.31816302     41.4%
+    Silicon                   3.450 86,896,364.63768116     29.0%
+
+    Light in a fiber (n = 1.458) travels at 68.6% of vacuum speed.
+    That's still 205 million m/s — but slower than vacuum.
+
+    This speed difference is what makes optical waveguides possible:
+    faster medium (low n) and slower medium (high n) create a
+    boundary that can TRAP light.
+    
+    ── Refraction at a glass-air interface ──
+
+    Glass (n=1.5) → Air (n=1.0):
+
+      θ₁ (glass)      θ₂ (air)       Bends
+    ────────────  ────────────  ──────────
+          10.0°        15.1°  away from normal
+          20.0°        30.9°  away from normal
+          30.0°        48.6°  away from normal
+          40.0°        74.6°  away from normal
+          41.8°        88.9°  away from normal
+
+    Critical angle: θ_c = arcsin(n₂/n₁) = arcsin(1.0/1.5) = 41.8°
+
+    Above the critical angle, Snell's law gives sin(θ₂) > 1 — impossible.
+    The light CAN'T escape. It reflects TOTALLY back into the glass.
+
+    This is TOTAL INTERNAL REFLECTION (TIR), and it's how fiber
+    optics work: keep the light hitting the boundary above θ_c,
+    and it bounces forever inside the core.
+    
+
+========================================================================
+  PART 2: TOTAL INTERNAL REFLECTION
+  Light trapped inside glass — forever
+========================================================================
+
+    For TIR to work, we need:
+      1. Light going from HIGH n to LOW n (core → cladding)
+      2. Angle of incidence > critical angle
+
+    In a fiber: core has n₁ (higher), cladding has n₂ (lower).
+
+        θ_critical = arcsin(n₂/n₁)
+
+    Any ray hitting the core-cladding interface at an angle
+    greater than θ_c bounces back — perfectly, with zero loss
+    from the reflection itself.
+    
+    Fiber type               Core ∅   Clad ∅      n₁      n₂     θ_c     NA
+    ────────────────────── ──────── ──────── ─────── ─────── ─────── ──────
+    Multi-mode (OM1)         62.5μm  125.0μm  1.4900  1.4750  81.9° 0.211
+    Multi-mode (OM3)         50.0μm  125.0μm  1.4820  1.4750  84.4° 0.144
+    Single-mode (OS2)         9.0μm  125.0μm  1.4680  1.4580  83.3° 0.171
+    Telecom SM                8.2μm  125.0μm  1.4681  1.4629  85.2° 0.123
+
+    Notice:
+      • The refractive index DIFFERENCE is tiny (< 1%)
+      • But that's enough for total internal reflection
+      • Single-mode fiber has a ~9 μm core — about 6× the wavelength
+      • Multi-mode has 50-62.5 μm — many wavelengths fit across
+
+    The NUMERICAL APERTURE (NA) measures how much light the fiber
+    can capture:
+
+        NA = √(n₁² − n₂²) = n₁ · sin(θ_acceptance)
+
+    Higher NA → wider acceptance cone → easier to couple light in.
+    But also → more modes → more dispersion (blurring).
+    
+
+    ── Fiber cross-section (multi-mode, 62.5/125 μm) ──
+
+    ┌────────────────────────────────────┐
+    │                                    │
+    │                                    │
+    │             ░░░░░░░░░░░            │
+    │         ░░░░░░░░░░░░░░░░░░░        │
+    │       ░░░░░░░░░░░░░░░░░░░░░░░      │
+    │      ░░░░░░░░░░░░░░░░░░░░░░░░░     │
+    │     ░░░░░░░░░█████████░░░░░░░░░    │
+    │    ░░░░░░░░█████████████░░░░░░░░   │
+    │    ░░░░░░░███████████████░░░░░░░   │
+    │   ░░░░░░░░███████████████░░░░░░░░  │
+    │    ░░░░░░░███████████████░░░░░░░   │
+    │    ░░░░░░░░█████████████░░░░░░░░   │
+    │     ░░░░░░░░░█████████░░░░░░░░░    │
+    │      ░░░░░░░░░░░░░░░░░░░░░░░░░     │
+    │       ░░░░░░░░░░░░░░░░░░░░░░░      │
+    │         ░░░░░░░░░░░░░░░░░░░        │
+    │             ░░░░░░░░░░░            │
+    │                                    │
+    └────────────────────────────────────┘
+         █ = core (n₁)   ░ = cladding (n₂)   n₁ > n₂
+
+========================================================================
+  PART 3: FIBER MODES
+  How many bouncing patterns fit in the core
+========================================================================
+
+    Just like a pipe has acoustic modes (script 02), a fiber
+    has OPTICAL modes — specific electromagnetic field patterns
+    that can propagate.
+
+    The key parameter is the V-number (normalized frequency):
+
+        V = (π · d / λ) · NA = (π · d / λ) · √(n₁² − n₂²)
+
+    where d = core diameter, λ = wavelength.
+
+    The NUMBER of modes ≈ V²/2 (for large V).
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  V < 2.405  →  SINGLE-MODE: only one pattern propagates   │
+    │  V > 2.405  →  MULTI-MODE: many patterns, each at a       │
+    │                 slightly different speed → dispersion       │
+    └─────────────────────────────────────────────────────────────┘
+
+    The magic number 2.405 is the first zero of the Bessel
+    function J₀ — it falls out of solving Maxwell's equations
+    in cylindrical coordinates with the fiber boundary conditions.
+    
+    At λ = 1550 nm (telecom C-band):
+
+    Fiber                        Core   V-number    ≈ Modes         Type
+    ──────────────────────── ──────── ────────── ────────── ────────────
+    Single-mode telecom         8.2μm       2.05          2  single-mode
+    Single-mode 1310nm          9.0μm       3.12          4   multi-mode
+    Multi-mode OM3             50.0μm      14.58        106   multi-mode
+    Multi-mode OM1             62.5μm      26.72        356   multi-mode
+    Large core (200μm)        200.0μm      85.49      3,654   multi-mode
+
+    The single-mode fiber has V ≈ 2.0 — just under the 2.405 cutoff.
+    Only ONE mode propagates. This means:
+      • No modal dispersion (all light takes the same path)
+      • Signals can travel hundreds of km without distortion
+      • Used for all long-distance telecom
+
+    The multi-mode fiber (V ≈ 30-50) has thousands of modes:
+      • Each mode has a slightly different propagation speed
+      • After some distance, the modes spread apart → pulse blurs
+      • Used for short distances (< 1 km, data centers)
+    
+    ── Transverse mode profiles (simplified 1D slab model) ──
+
+       1.000 ┤                         ██████│                        
+             ┤                       ██│     ██│                      
+             ┤                      █│         █│                     
+       0.500 ┤                     █│           █│                    
+             ┤                    █│             █│                   
+             ┤                  ██│               ██│                 
+       0.000 ┤██████████████████│                   ██████████████████
+             └────────────────────────────────────────────────────────
+                                Mode 0 — even (core)
+
+       1.000 ┤                              █████│                    
+             ┤                             █│    █│                   
+             ┤                            █│      ██████│             
+       0.000 ┤████████████████████·······█··············██████████████
+             ┤                    █│    █│                            
+             ┤                     ██│██│                             
+      -1.000 ┤                       █│                               
+             └────────────────────────────────────────────────────────
+                            Mode 1 — odd (higher order)
+
+       1.000 ┤                          ████│                         
+             ┤                          │   │                         
+             ┤███████████████████······█····█······███████████████████
+      -0.000 ┤                   █│   █│     █│    │                  
+             ┤                    │   │       █│  █│                  
+             ┤                    ████│        ███│                   
+      -1.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                            Mode 2 — even (higher order)
+
+       1.000 ┤                    ██│      ███│                       
+             ┤                   █│ █│    █│  │                       
+             ┤               ████│   │    │   █│                      
+       0.000 ┤███████████████········█·············███████████████████
+             ┤                        █│ █│    █│ █│                  
+             ┤                         ██│      ██│                   
+      -1.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                            Mode 3 — odd (higher order)
+
+
+    SAME physics as acoustic modes (script 02):
+      • Core = pipe interior (oscillatory)
+      • Cladding = beyond the pipe walls (evanescent/decaying)
+
+    The difference: in acoustics, the wave is ZERO at the wall.
+    In optics, the field PENETRATES into the cladding — an
+    evanescent tail that decays exponentially. This is why
+    single-mode fiber still works even with a 9μm core: the
+    mode extends slightly beyond the physical glass boundary.
+    
+
+========================================================================
+  PART 4: MODAL DISPERSION
+  Different modes travel at different speeds → pulse broadening
+========================================================================
+
+    In a multi-mode fiber, each mode travels at a slightly different
+    group velocity. After some distance, a sharp input pulse SPREADS:
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Input:   ▃▆█▆▃           (sharp pulse)                    │
+    │  After L: ▁▂▃▅▆█▆▅▃▂▁    (broadened pulse)                │
+    │  After 2L: ▁▁▂▃▄▅▅▆▆▆▅▅▄▃▂▁▁  (even broader)            │
+    └─────────────────────────────────────────────────────────────┘
+
+    The time spread for a step-index fiber is approximately:
+
+        Δτ/L ≈ (n₁ − n₂) / c₀ × n₁/n₂
+
+    This limits the BIT RATE × DISTANCE product:
+
+        B × L ≤ 1 / (4 × Δτ/L)
+    
+    Modal dispersion comparison (per km):
+
+    Fiber                  Δτ (ns/km)     Max bit rate   Max distance
+    ──────────────────── ──────────── ──────────────── ──────────────
+    Step-index MM             50.54       0.0 Gbps·km          0.0 km
+    Graded-index MM            0.23       1.1 Gbps·km          1.1 km
+    Single-mode                0.05       5.0 Gbps·km          5.0 km
+
+    KEY INSIGHT: single-mode fiber has essentially ZERO modal dispersion.
+    Only chromatic dispersion (different wavelengths travel at slightly
+    different speeds) limits the bandwidth.
+
+    This is why all long-distance telecom uses single-mode fiber:
+    submarine cables, backbone networks, connections between cities.
+
+    Multi-mode is used for short links (< 300m): server-to-switch
+    connections in data centers, where the distance is too short
+    for dispersion to matter.
+    
+    ── Pulse broadening simulation ──
+
+       0.995 ┤                                                        
+             ┤                            █│                          
+             ┤                           █││                          
+       0.497 ┤                           │ │                          
+             ┤                           │ │                          
+             ┤                       ████│ ████│                      
+       0.000 ┤███████████████████████│         ███████████████████████
+             └────────────────────────────────────────────────────────
+                                Input pulse (sharp)
+
+       1.000 ┤                           ██│                          
+             ┤                           │ █│                         
+             ┤                          █│  │                         
+       0.500 ┤                          │   █│                        
+             ┤                         █│    │                        
+             ┤             ████████████│     ████████████│            
+       0.000 ┤█████████████│                             █████████████
+             └────────────────────────────────────────────────────────
+                         After 1 km (σ_broadening = 0.3 ns)
+
+       1.000 ┤                         ██████│                        
+             ┤                        █│     █│                       
+             ┤                       █│       █│                      
+       0.500 ┤                     ██│         ██│                    
+             ┤                    █│             █│                   
+             ┤ ███████████████████│               ███████████████████│
+       0.000 ┤█│                                                     █
+             └────────────────────────────────────────────────────────
+                         After 5 km (σ_broadening = 0.8 ns)
+
+       1.000 ┤                       ██████████│                      
+             ┤                     ██│         ██│                    
+             ┤                  ███│             ███│                 
+       0.502 ┤                ██│                   ██│               
+             ┤             ███│                       ████│           
+             ┤ ████████████│                              ███████████│
+       0.004 ┤█│                                                     █
+             └────────────────────────────────────────────────────────
+                        After 20 km (σ_broadening = 1.5 ns)
+
+    As the pulse travels further, it spreads wider and shorter.
+    Eventually adjacent pulses OVERLAP and the receiver can't
+    distinguish 0 from 1. That's the bandwidth limit.
+
+    Solutions:
+      • Use single-mode fiber (eliminate modal dispersion)
+      • Use graded-index fiber (equalize mode speeds)
+      • Use optical amplifiers + regenerators
+      • Use wavelength-division multiplexing (WDM) — many colors
+        of light in the same fiber, each carrying a separate signal
+    
+
+========================================================================
+  PART 5: WAVELENGTH DIVISION MULTIPLEXING
+  The fiber as a multi-channel waveguide
+========================================================================
+
+    A single-mode fiber guides ONE spatial mode. But light comes
+    in MANY wavelengths (colors). Each wavelength propagates
+    independently — meaning we can send multiple signals
+    simultaneously on different wavelengths.
+
+    This is WDM: Wavelength Division Multiplexing.
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  λ₁ = 1530 nm ───→ ┌──────────┐ ───→ λ₁ → Receiver 1     │
+    │  λ₂ = 1535 nm ───→ │  Single  │ ───→ λ₂ → Receiver 2     │
+    │  λ₃ = 1540 nm ───→ │  Fiber   │ ───→ λ₃ → Receiver 3     │
+    │  ...            ───→ │          │ ───→ ...                  │
+    │  λ_80 = 1565nm ───→ └──────────┘ ───→ λ_80 → Receiver 80  │
+    └─────────────────────────────────────────────────────────────┘
+
+    Dense WDM (DWDM) uses 80+ channels spaced 0.4 nm apart
+    in the C-band (1530-1565 nm).
+    
+    DWDM channel plan (sample):
+
+       Channel   Wavelength       Rate
+    ────────── ──────────── ──────────
+          Ch 1    1530.33 nm      100 Gbps
+         Ch 10    1537.40 nm      100 Gbps
+         Ch 20    1545.32 nm      100 Gbps
+         Ch 40    1561.42 nm      100 Gbps
+         Ch 80    1593.42 nm      100 Gbps
+
+    80 channels × 100 Gbps = 8 Tbps per fiber.
+
+    Modern systems push this further:
+      • 400 Gbps per channel (coherent detection)
+      • C+L band (160+ channels)
+      • Up to 20+ Tbps per fiber pair
+
+    This is a PHYSICAL Fourier decomposition: each wavelength is
+    a frequency component, and the fiber carries all of them
+    simultaneously — the same principle as repo 2's FFT, but
+    implemented in glass rather than code.
+    
+
+========================================================================
+  PART 6: FIBER SIMULATION
+  1D slab waveguide: light trapped between boundaries
+========================================================================
+
+    Let's simulate a light pulse in a 1D slab waveguide —
+    the 2D analog of a fiber. Two cladding regions surround
+    a higher-index core.
+
+    The wave equation with spatially varying refractive index:
+
+        ∂²E/∂t² = (c₀/n(x))² · ∂²E/∂x²
+
+    n(x) is higher in the core, lower in the cladding.
+    
+    Slab waveguide: core width = 4 μm
+    n_core = 1.468, n_clad = 1.458
+    Δn = 0.010 (0.7%)
+
+    Refractive index profile:
+       1.468 ┤                 ██████████████████████│                
+             ┤                 │                     │                
+       1.463 ┤                 │                     │                
+             ┤                 │                     │                
+       1.458 ┤█████████████████│                     █████████████████
+             └────────────────────────────────────────────────────────
+                      n(x) — higher in core, lower in cladding
+
+       1.000 ┤                          ████│                         
+             ┤                          │   │                         
+             ┤                         █│   █│                        
+       0.500 ┤                        █│     █│                       
+             ┤                       █│       █│                      
+             ┤    ███████████████████│         ███████████████████│   
+       0.000 ┤████│                                               ████
+             └────────────────────────────────────────────────────────
+                           step 0 — pulse in core region
+
+       0.629 ┤                         ██████│                        
+             ┤                        █│     ██│                      
+             ┤                       █│        │                      
+       0.314 ┤                      █│         █│                     
+             ┤                     █│           ██│                   
+             ┤  ███████████████████│              ██████████████████│ 
+       0.000 ┤██│                                                   ██
+             └────────────────────────────────────────────────────────
+                           step 60 — pulse in core region
+
+       0.500 ┤                    ███│         ███│                   
+             ┤                   █│  █│       █│  █│                  
+             ┤                  █│    █│     █│    █│                 
+       0.250 ┤                 █│      █│    │      █│                
+             ┤                █│        █│ ██│       █│               
+             ┤ ███████████████│          ██│          ███████████████│
+       0.000 ┤█│                                                     █
+             └────────────────────────────────────────────────────────
+                          step 150 — pulse in core region
+
+       0.502 ┤             ████│                      ███│            
+             ┤            █│   │                     █│  █│           
+             ┤            │    █│                   █│    │           
+       0.251 ┤           █│     █│                 █│     █│          
+             ┤          █│       █│               █│       █│         
+             ┤ █████████│         ████████████████│         █████████│
+       0.000 ┤█│                                                     █
+             └────────────────────────────────────────────────────────
+                          step 300 — pulse in core region
+
+       0.502 ┤    ████│                                       ████│   
+             ┤    │   █│                                      │   █│  
+             ┤   █│    │                                     █│    │  
+       0.251 ┤  █│     █│                                   █│     █│ 
+             ┤ █│       █│                                 █│       █│
+             ┤█│         ██████████████████████████████████│         █
+       0.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                          step 500 — pulse in core region
+
+
+    Notice how the pulse partially stays trapped in the core (guided mode)
+    while some energy leaks into the cladding (radiation modes).
+    The guided part bounces back and forth — this is the fiber
+    carrying a signal over distance.
+
+    In a real fiber, the guided modes propagate indefinitely (aside
+    from absorption loss of ~0.2 dB/km in silica at 1550nm).
+    The radiation modes leak away within millimeters.
+    
+
+========================================================================
+  PART 7: FIBER LOSS AND AMPLIFICATION
+  Why signals fade and how we fix it
+========================================================================
+
+    Real fibers aren't perfect. Light gradually fades due to:
+
+      • Rayleigh scattering (molecules in the glass scatter light)
+      • Material absorption (OH ions, UV/IR absorption)
+      • Bending loss (tight curves let light escape)
+
+    Loss is measured in dB/km:
+
+        Loss(dB) = −10 · log₁₀(P_out / P_in)
+    
+      Wavelength   Loss (dB/km) Application
+    ──────────── ────────────── ──────────────────────────────
+           850 nm         2.50 Multi-mode data center
+          1310 nm         0.35 Zero-dispersion window
+          1550 nm         0.20 Minimum loss (telecom C-band)
+          1625 nm         0.25 L-band
+
+    Signal power vs. distance (at 1550 nm, 0.2 dB/km):
+
+       1.000 ┤██│                                                     
+             ┤  ██│                                                   
+             ┤    ██│                                                 
+             ┤      ███│                                              
+       0.505 ┤         ███│                                           
+             ┤            █████│                                      
+             ┤                 ████████│                              
+             ┤                         ██████████████████████████████│
+       0.010 ┤                                                       █
+             └────────────────────────────────────────────────────────
+                     Optical power (mW) vs distance (0-100 km)
+
+    With erbium-doped fiber amplifiers (EDFA) every 80 km:
+
+       1.000 ┤█│                                                     █
+             ┤ │                                                     │
+             ┤ █│         █│         █│         █│         █│        │
+             ┤  █│        │█│        │█│        │█│        │█│       │
+       0.513 ┤   │        │ │        │ │        │ │        │ │       │
+             ┤   █│       │ █│       │ ██│      │ █│       │ █│      │
+             ┤    ██│     │  ██│     │   █│     │  ██│     │  ██│    │
+             ┤      ██████│    ██████│    ██████│    █████││    █████│
+       0.025 ┤                                            █│          
+             └────────────────────────────────────────────────────────
+                      Power with EDFAs every 80 km (0-400 km)
+
+    EDFAs (Erbium-Doped Fiber Amplifiers) boost the signal optically
+    — no need to convert to electrical and back. They amplify ALL
+    wavelengths in the C-band simultaneously, which is why WDM works
+    so well: one amplifier boosts 80+ channels at once.
+
+    Submarine cables spanning oceans use EDFAs every ~80 km:
+
+        London → New York: ~5,500 km = ~69 amplifiers
+        Total capacity: 200+ Tbps per cable
+
+    ALL of this is the wave equation with glass boundaries.
+    
+
+========================================================================
+  PART 8: ACOUSTIC vs. OPTICAL — SAME PHYSICS
+========================================================================
+
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  Concept           │  Acoustic pipe         │  Optical fiber       │
+    ├─────────────────────┼────────────────────────┼──────────────────────┤
+    │  Wave equation     │  ∂²p/∂t² = c²∇²p      │  ∂²E/∂t² = c²∇²E   │
+    │  Wave speed        │  c = √(γP/ρ)           │  c = c₀/n           │
+    │  Speed varies with │  Temperature, gas type  │  Refractive index   │
+    │  Boundary type     │  Rigid walls            │  Index step          │
+    │  Confinement       │  Physical walls         │  Total int. refl.   │
+    │  Modes             │  sin(nπx/L)             │  Bessel functions    │
+    │  Mode count        │  Depends on L vs λ      │  Depends on V       │
+    │  Cutoff            │  f_c = mc/(2W)          │  V < 2.405          │
+    │  Dispersion        │  v_g × v_p = c²         │  v_g × v_p = c²     │
+    │  Signal            │  Pressure variations    │  EM field            │
+    │  Typical speed     │  343 m/s (air)          │  2×10⁸ m/s (glass)  │
+    │  Loss mechanism    │  Friction, radiation    │  Scattering, abs.   │
+    │  Amplification     │  Electronic amplifier   │  EDFA (optical)      │
+    └─────────────────────┴────────────────────────┴──────────────────────┘
+
+    The math is IDENTICAL. Only the parameters change.
+    This is the theme of this repo: one equation, many media.
+
+    Script 04 will show the SAME physics applies to water waves,
+    where the wave speed c = √(g·h) depends on depth rather than
+    index or pressure.
+    
+
+========================================================================
+  SUMMARY: OPTICAL WAVEGUIDES
+========================================================================
+
+    This script explored light confined by refractive index:
+
+      ✓ Snell's law: n₁·sin(θ₁) = n₂·sin(θ₂)
+      ✓ Total internal reflection: the trapping mechanism
+      ✓ Fiber modes: V-number determines how many
+      ✓ V < 2.405 = single-mode (cleanest signal)
+      ✓ Modal dispersion: different modes → different speeds → blur
+      ✓ WDM: many wavelengths, one fiber, massive bandwidth
+      ✓ FDTD simulation: light bouncing in a slab waveguide
+      ✓ Loss and amplification: EDFAs boost all channels at once
+      ✓ Acoustic ↔ optical: same equation, different parameters
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  NEXT: Script 04 — WATER waves.                            │
+    │  c = √(g·h). Depth controls speed.                         │
+    │  The ocean floor is a waveguide.                            │
+    │  The coastline is a boundary.                               │
+    │  And a tsunami is the wave.                                 │
+    └─────────────────────────────────────────────────────────────┘
+    
+
+========================================================================
+  Done. Run 04_fluid_channels_and_shallow_water.py next.
+========================================================================

@@ -1,0 +1,179 @@
+═══════════════════════════════════════════════════════════════════════
+  THE SHALLOW WATER EQUATIONS — Why Depth Controls Everything
+═══════════════════════════════════════════════════════════════════════
+
+  Tsunamis, tides, storm surges, and harbor oscillations are all
+  governed by the shallow water equations (SWE). These are the
+  wave equation specialized for water where the wavelength is
+  much longer than the depth.
+
+───────────────────────────────────────────────────────────────────────
+  THE EQUATIONS
+───────────────────────────────────────────────────────────────────────
+
+  For a fluid with surface elevation η(x,y,t) above mean depth h(x,y):
+
+  MOMENTUM (Newton's 2nd law for fluids):
+
+      ∂u/∂t = −g · ∂η/∂x       (x-velocity)
+      ∂v/∂t = −g · ∂η/∂y       (y-velocity)
+
+  CONTINUITY (conservation of mass):
+
+      ∂η/∂t = −∂(H·u)/∂x − ∂(H·v)/∂y
+
+  where H = h + η is the total water depth, g = 9.81 m/s².
+
+  For small waves (η << h), this linearizes to:
+
+      ∂²η/∂t² = g · ∇·(h · ∇η)
+
+  If h is constant, this is just the wave equation:
+
+      ∂²η/∂t² = (g·h) · ∇²η
+
+  with wave speed c = √(g·h).
+
+───────────────────────────────────────────────────────────────────────
+  WHY "SHALLOW"?
+───────────────────────────────────────────────────────────────────────
+
+  The shallow water approximation holds when:
+
+      wavelength >> depth     (equivalently: λ/h > 20)
+
+  A tsunami has λ ≈ 200 km and ocean depth ≈ 4 km → λ/h = 50. ✓
+  A tsunami IS a shallow water wave, even in the deep ocean.
+
+  This seems counterintuitive: the deep ocean is "shallow" for a
+  tsunami because the wave is so enormously long. The wave "feels"
+  the bottom everywhere.
+
+───────────────────────────────────────────────────────────────────────
+  DEPTH CONTROLS SPEED
+───────────────────────────────────────────────────────────────────────
+
+      c = √(g·h)
+
+  This single formula explains almost everything:
+
+  DEEP OCEAN (h = 4000 m):
+      c = √(9.81 × 4000) = 198 m/s ≈ 713 km/h
+      A tsunami crosses the Pacific in ~12 hours at jet speed.
+
+  CONTINENTAL SHELF (h = 200 m):
+      c = √(9.81 × 200) = 44 m/s ≈ 160 km/h
+      The wave slows dramatically as it enters shallow water.
+
+  COASTAL WATERS (h = 10 m):
+      c = √(9.81 × 10) = 9.9 m/s ≈ 36 km/h
+      Walking speed. But the energy hasn't gone anywhere...
+
+───────────────────────────────────────────────────────────────────────
+  SHOALING: WHERE THE DANGER COMES FROM
+───────────────────────────────────────────────────────────────────────
+
+  Conservation of energy flux:
+
+      E · c_g = constant along a wave ray
+
+  where E ∝ A² (energy ∝ amplitude²) and c_g is the group velocity.
+
+  As depth decreases: c_g decreases → A must INCREASE.
+
+  A tsunami in the deep ocean is only ~0.5 m tall. But as it
+  approaches shore and the depth drops from 4000m to 10m:
+
+      A_coast / A_ocean ≈ (h_ocean / h_coast)^(1/4)
+                        ≈ (4000 / 10)^(1/4)
+                        ≈ 4.5×
+
+  The 0.5m deep-ocean wave becomes a 2+ meter coastal wave.
+  Add focusing effects from bathymetry and it can reach 10+ meters.
+
+───────────────────────────────────────────────────────────────────────
+  BATHYMETRIC REFRACTION — THE OCEAN AS A LENS
+───────────────────────────────────────────────────────────────────────
+
+  Since wave speed depends on depth, waves REFRACT when the
+  bottom topography changes — exactly like light refracting
+  through glass (Snell's law).
+
+      sin(θ₁)/c₁ = sin(θ₂)/c₂
+
+  Where:
+    θ₁, θ₂ = wave angles
+    c₁, c₂ = wave speeds = √(g·h₁), √(g·h₂)
+
+  This is the SAME Snell's law from optical waveguides!
+  The ocean floor shape acts as a lens:
+
+    • Submarine ridges FOCUS waves (like a convex lens)
+    • Submarine valleys SPREAD waves (like a concave lens)
+    • Coastline contours bend waves to arrive nearly parallel to shore
+    • Harbors can trap and amplify waves (harbor resonance)
+
+  This is also the SAME physics as repo 3's weighted wave
+  propagation: the Eikonal equation |∇T| = 1/c(x,y) gives
+  the arrival time T at every point, where c varies with depth.
+
+───────────────────────────────────────────────────────────────────────
+  NUMERICAL SIMULATION
+───────────────────────────────────────────────────────────────────────
+
+  To simulate a tsunami, we solve the SWE on a 2D domain:
+
+  1. DISCRETIZE space into a grid (Δx, Δy)
+  2. DISCRETIZE time into steps (Δt)
+  3. Apply the CFL condition: Δt ≤ Δx / (√2 · c_max)
+     where c_max = √(g · h_max)
+  4. Evolve using finite differences (FDTD)
+  5. Handle boundaries: coastlines (reflective), open ocean (absorbing)
+
+  The grid resolution must satisfy the Nyquist criterion from repo 2:
+  at least 2 points per wavelength (typically 10-20 for accuracy).
+
+  The same FDTD method works for acoustic and optical waveguides —
+  only the parameters change:
+
+    ACOUSTIC:  c = 343 m/s (air), rigid walls
+    OPTICAL:   c = c₀/n, index-guided boundaries
+    FLUID:     c = √(g·h), depth-varying speed
+
+───────────────────────────────────────────────────────────────────────
+  REAL-WORLD TSUNAMI EVENTS
+───────────────────────────────────────────────────────────────────────
+
+  2004 Indian Ocean:
+    Magnitude 9.1 earthquake, rupture length 1300 km
+    Waves reached 30 m height at coast
+    Propagated across entire Indian Ocean in ~7 hours
+    ~230,000 casualties — led to Indian Ocean tsunami warning system
+
+  2011 Tōhoku (Japan):
+    Magnitude 9.0, seafloor displaced ~5 m vertically
+    Waves reached 40.5 m at max runup
+    Crossed Pacific in ~22 hours
+    Triggered Fukushima nuclear disaster
+
+  In both cases, the physics is exactly what the shallow water
+  equations predict: fast in deep water, slow and tall near shore.
+
+───────────────────────────────────────────────────────────────────────
+  THE CONNECTION
+───────────────────────────────────────────────────────────────────────
+
+  Repo 2 showed that Fourier decomposition reveals hidden structure.
+  The shallow water equations show that depth IS the hidden
+  structure of ocean waves. Varying h(x,y) is equivalent to
+  varying the refractive index n(x,y) in optics. The same math
+  governs both.
+
+  Repo 3 showed that wave propagation finds shortest paths.
+  A tsunami's arrival time contour map IS a shortest-path tree
+  from the earthquake source, where the "cost" at each point is
+  1/√(g·h). The Eikonal equation that governed pathfinding in
+  repo 3 is literally the high-frequency limit of the wave equation.
+
+  The ocean floor is a waveguide. The coastline is a boundary.
+  The tsunami is the wave. One equation governs it all.

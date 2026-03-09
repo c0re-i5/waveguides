@@ -1,0 +1,557 @@
+
+========================================================================
+  ACOUSTIC WAVEGUIDES — Sound in Pipes
+  Why flutes play notes and hallways echo
+========================================================================
+
+========================================================================
+  PART 1: CLOSED-CLOSED PIPE
+  Both ends rigid — the simplest acoustic waveguide
+========================================================================
+
+    A pipe with BOTH ends closed acts like a string fixed at both ends.
+    Sound pressure has a maximum at the walls (pressure antinode),
+    and the displacement has a zero (displacement node).
+
+    For displacement modes:
+
+        uₙ(x) = sin(nπx/L)      n = 1, 2, 3, ...
+        fₙ = n · c / (2L)
+
+    This is identical to the string modes from script 01.
+    The pipe LENGTH determines the fundamental frequency.
+    
+    Pipe length: L = 0.5 m
+    Sound speed: c = 343.0 m/s
+    Fundamental: f₁ = c/(2L) = 343.0 Hz
+
+    Displacement standing wave modes:
+
+       1.000 ┤                  ████████████████████│                 
+             ┤             █████│                   █████│            
+             ┤          ███│                             ███│         
+       0.500 ┤      ████│                                   ████│     
+             ┤   ███│                                           ███│  
+             ┤ ██│                                                 ███
+       0.000 ┤█│                                                      
+             └────────────────────────────────────────────────────────
+                             Mode n=1  |  f = 343.0 Hz
+
+       1.000 ┤       ███████████████│                                 
+             ┤   ████│              ███│                              
+             ┤ ██│                     ███│                           
+       0.000 ┤█···························███······················███
+             ┤                               ███│              ████│  
+             ┤                                  ███████████████│      
+      -1.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                             Mode n=2  |  f = 686.0 Hz
+
+       1.000 ┤     ██████████│                          █████████│    
+             ┤  ███│         ██│                     ███│        ███│ 
+             ┤ █│              ██│                 ██│              █│
+       0.000 ┤█··················██··············██··················█
+             ┤                     ██│         ██│                    
+             ┤                       ██████████│                      
+      -1.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                             Mode n=3  |  f = 1029.0 Hz
+
+       1.000 ┤    ███████│                   ████████│                
+             ┤  ██│      ██│               ██│       █│               
+             ┤ █│          █│             █│          ██│             
+       0.000 ┤█·············██···········█··············█···········██
+             ┤                █│       ██│               ██│      ██│ 
+             ┤                 ████████│                   ███████│   
+      -1.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                             Mode n=4  |  f = 1372.0 Hz
+
+
+    Each mode has n half-wavelengths that fit exactly in the pipe.
+    The frequencies are HARMONIC: f₂ = 2f₁, f₃ = 3f₁, etc.
+
+    This harmonic series is why musical instruments sound "musical" —
+    the overtones are integer multiples of the fundamental, creating
+    a pleasing sound. A metal rod or a bell has NON-harmonic overtones,
+    which is why they sound more like "clang" than "tone".
+    
+
+========================================================================
+  PART 2: OPEN-OPEN PIPE
+  Both ends free — pressure nodes at the openings
+========================================================================
+
+    An open pipe end is a PRESSURE NODE (the pressure equals
+    atmospheric — the wave can't push against anything).
+
+    For displacement, open ends are ANTINODES (max displacement).
+
+    The mode shapes are COSINES:
+
+        uₙ(x) = cos(nπx/L)     n = 0, 1, 2, ...
+        fₙ = n · c / (2L)       (same frequencies as closed-closed!)
+
+    Wait — the n=0 mode? That's just a uniform displacement.
+    It represents a DC offset (air flowing through the pipe)
+    and doesn't contribute to sound.
+
+    The SAME harmonic series as a closed-closed pipe, but with
+    different mode SHAPES. Cosines instead of sines.
+    
+    Open-open pipe, L = 0.5 m:
+
+       1.000 ┤███████████████│                                        
+             ┤               ███████│                                 
+             ┤                      ██████│                           
+       0.000 ┤····························██████······················
+             ┤                                  ███████│              
+             ┤                                         ██████████████│
+      -1.000 ┤                                                       █
+             └────────────────────────────────────────────────────────
+                             Mode n=1  |  f = 343.0 Hz
+
+       1.000 ┤████████│                                       ████████
+             ┤        ███│                                 ███│       
+             ┤           ███│                           ███│          
+       0.000 ┤··············███······················███··············
+             ┤                 ████│             ████│                
+             ┤                     ██████████████│                    
+      -1.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                             Mode n=2  |  f = 686.0 Hz
+
+       1.000 ┤█████│                          ██████████│             
+             ┤     ███│                     ██│         ██│           
+             ┤        ██│                 ██│             ██│         
+       0.000 ┤··········██··············██··················██········
+             ┤            ██│         ██│                     ███│    
+             ┤              ██████████│                          ████│
+      -1.000 ┤                                                       █
+             └────────────────────────────────────────────────────────
+                             Mode n=3  |  f = 1029.0 Hz
+
+       1.000 ┤████│                   ████████│                   ████
+             ┤    ██│                █│       █│                ██│   
+             ┤      █│             ██│         ██│             █│     
+       0.000 ┤·······██···········█··············█···········██·······
+             ┤         ██│      ██│               ██│      ██│        
+             ┤           ███████│                   ███████│          
+      -1.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                             Mode n=4  |  f = 1372.0 Hz
+
+
+    Notice the key difference from closed-closed:
+      • Closed-closed: zero displacement at BOTH ends (sines)
+      • Open-open: maximum displacement at BOTH ends (cosines)
+
+    Both produce the FULL harmonic series (all integer multiples).
+    A flute approximates an open-open pipe.
+    
+
+========================================================================
+  PART 3: OPEN-CLOSED PIPE
+  One end open, one end closed — only odd harmonics
+========================================================================
+
+    A pipe closed at one end and open at the other is more interesting.
+
+    The closed end forces a displacement NODE (u = 0).
+    The open end forces a displacement ANTINODE (maximum).
+
+    Only ODD quarter-wavelengths fit:
+
+        uₙ(x) = sin((2n−1)πx/(2L))    n = 1, 2, 3, ...
+        fₙ = (2n−1) · c / (4L)
+
+    The fundamental is f₁ = c/(4L) — HALF the frequency of an
+    open-open or closed-closed pipe of the same length.
+
+    And only ODD harmonics exist: f₁, 3f₁, 5f₁, 7f₁, ...
+
+    This gives a distinctive "hollow" sound (like a clarinet).
+    
+    Open-closed pipe, L = 0.5 m
+    Fundamental: f₁ = c/(4L) = 171.5 Hz
+
+       1.000 ┤                                   █████████████████████
+             ┤                          █████████│                    
+             ┤                   ███████│                             
+       0.500 ┤            ███████│                                    
+             ┤      ██████│                                           
+             ┤ █████│                                                 
+       0.000 ┤█│                                                      
+             └────────────────────────────────────────────────────────
+                      Mode n=1  |  harmonic 1  |  f = 171.5 Hz
+
+       1.000 ┤         ████████████████████│                          
+             ┤    █████│                   ████│                      
+             ┤████·····························████···················
+      -0.000 ┤                                     ████│              
+             ┤                                         █████│         
+             ┤                                              █████████│
+      -1.000 ┤                                                       █
+             └────────────────────────────────────────────────────────
+                      Mode n=2  |  harmonic 3  |  f = 514.5 Hz
+
+       1.000 ┤      ███████████│                                ██████
+             ┤   ███│          ███│                          ███│     
+             ┤ ██│                ███│                     ██│        
+       0.000 ┤█······················██·················███···········
+             ┤                         ███│          ███│             
+             ┤                            █████│█████│                
+      -1.000 ┤                                 █│                     
+             └────────────────────────────────────────────────────────
+                      Mode n=3  |  harmonic 5  |  f = 857.5 Hz
+
+       1.000 ┤    █████████│                      ████████│           
+             ┤  ██│        ██│                  ██│       ██│         
+             ┤██·············█················██············██········
+      -0.000 ┤                ██│           ██│               █│      
+             ┤                  ██│       ██│                  ██│    
+             ┤                    ████████│                      ████│
+      -1.000 ┤                                                       █
+             └────────────────────────────────────────────────────────
+                     Mode n=4  |  harmonic 7  |  f = 1200.5 Hz
+
+
+    Compare the spectra:
+
+    ┌────────────────────────────────────────────────────────────┐
+    │  Closed-closed or Open-open:                              │
+    │    Harmonics: 1, 2, 3, 4, 5, 6, 7, 8, ...               │
+    │    → Rich, bright sound (flute, open organ pipe)          │
+    │                                                           │
+    │  Open-closed:                                             │
+    │    Harmonics: 1, 3, 5, 7, 9, ...                         │
+    │    → Hollow, reedy sound (clarinet, stopped organ pipe)   │
+    └────────────────────────────────────────────────────────────┘
+
+    The pipe's boundary conditions FILTER the wave — only allowing
+    modes that satisfy the constraints. This is a physical bandpass
+    filter, performing in space what repo 2's FFT filters do in code.
+    
+
+========================================================================
+  PART 4: CUTOFF FREQUENCY
+  Below this frequency, the wave can't propagate
+========================================================================
+
+    In a RECTANGULAR waveguide (a duct with width W and height H),
+    transverse modes have a minimum frequency below which they
+    CAN'T propagate — they decay exponentially instead.
+
+    For a 2D duct of width W:
+
+        f_cutoff(m) = m · c / (2W)     m = 1, 2, 3, ...
+
+    Below f_cutoff(1) = c/(2W), ONLY the plane wave (m=0) propagates.
+    The waveguide acts as a HIGH-PASS FILTER for higher modes.
+
+    This is why:
+      • Narrow pipes transmit fewer modes than wide pipes
+      • Fiber optics can be "single mode" (thin enough to cut off all
+        modes except the fundamental)
+      • HVAC ducts transmit low-frequency rumble but not high-frequency
+        speech (the duct width sets the cutoff)
+    
+    Cutoff frequencies for rectangular ducts (first 3 modes):
+
+      Duct width      Mode 1      Mode 2      Mode 3
+    ────────────  ──────────  ──────────  ──────────
+          0.05 m      3430 Hz      6860 Hz     10290 Hz
+          0.10 m      1715 Hz      3430 Hz      5145 Hz
+          0.20 m       858 Hz      1715 Hz      2572 Hz
+          0.50 m       343 Hz       686 Hz      1029 Hz
+          1.00 m       172 Hz       343 Hz       514 Hz
+
+    A 5 cm wide duct cuts off everything above the plane wave at 3430 Hz.
+    Human speech (300–3400 Hz) would barely propagate in a 5 cm duct!
+
+    A 1 m wide duct has cutoff at 172 Hz — most sound passes through.
+
+    This filter effect is IDENTICAL in principle to optical fibers:
+      • Wider core → more modes → more dispersion
+      • Narrower core → fewer modes → cleaner signal
+    We'll see the optical version in script 03.
+    
+
+========================================================================
+  PART 5: WAVEGUIDE DISPERSION
+  Group velocity vs. phase velocity
+========================================================================
+
+    In free space, all sound frequencies travel at c = 343 m/s.
+    Inside a waveguide, HIGHER MODES travel SLOWER. This is
+    dispersion: different frequencies have different speeds.
+
+    For mode m in a duct of width W, the propagation speed is:
+
+        v_phase(f) = c / √(1 − (f_c/f)²)      phase velocity
+        v_group(f) = c · √(1 − (f_c/f)²)       group velocity
+
+    where f_c = m·c/(2W) is the cutoff frequency.
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Phase velocity: speed of the wave CRESTS                  │
+    │    → Can exceed c! (but no information travels this fast)  │
+    │                                                            │
+    │  Group velocity: speed of the ENVELOPE (the information)   │
+    │    → Always ≤ c                                            │
+    │    → Goes to ZERO at the cutoff frequency                  │
+    │                                                            │
+    │  v_phase × v_group = c²  (always!)                         │
+    └─────────────────────────────────────────────────────────────┘
+    
+    Duct width: W = 0.1 m
+    Mode 1 cutoff: f_c = 1715 Hz
+
+    Group velocity (information speed) vs frequency:
+
+     336.070 ┤               █████████████████████████████████████████
+             ┤        ███████│                                        
+             ┤     ███│                                               
+             ┤   ██│                                                  
+     192.109 ┤  █│                                                    
+             ┤ █│                                                     
+             ┤ │                                                      
+             ┤ │                                                      
+      48.147 ┤█│                                                      
+             └────────────────────────────────────────────────────────
+              Group velocity (m/s) — approaches c=343.0 m/s at high f
+
+    Phase velocity (crest speed) vs frequency:
+
+    2000.000 ┤█│                                                      
+             ┤ │                                                      
+             ┤ │                                                      
+             ┤ │                                                      
+    1175.036 ┤ │                                                      
+             ┤ █│                                                     
+             ┤  ██│                                                   
+             ┤    ███████████████████████████████████████████████████│
+     350.073 ┤                                                       █
+             └────────────────────────────────────────────────────────
+              Phase velocity (m/s) — diverges near cutoff, approaches c at high f
+
+    Verification: v_phase × v_group = c² at selected frequencies:
+
+       Frequency     v_group     v_phase     v_g × v_p            c²
+    ────────────  ──────────  ──────────  ────────────  ────────────
+          2572 Hz     255.7 m/s     460.2 m/s      117649      117649
+          3430 Hz     297.0 m/s     396.1 m/s      117649      117649
+          5145 Hz     323.4 m/s     363.8 m/s      117649      117649
+          8575 Hz     336.1 m/s     350.1 m/s      117649      117649
+
+    The product v_group × v_phase = c² exactly. Always.
+
+    Near cutoff: v_group → 0, v_phase → ∞ (but no energy moves)
+    Far above cutoff: both approach c (free-space behavior)
+
+    This dispersion is why a sharp pulse SPREADS OUT as it
+    travels through a waveguide — different frequency components
+    travel at different speeds. Repo 2's wavelets are the tool
+    for analyzing this time-frequency behavior.
+    
+
+========================================================================
+  PART 6: PIPE SIMULATION
+  Watching sound bounce inside a tube
+========================================================================
+
+    Let's simulate a sound pulse traveling through a closed pipe
+    and watch it reflect back and forth:
+    
+    Pipe length: 1.0 m
+    Grid points: 500
+    CFL number: r = c·dt/dx = 0.800
+    Boundary: CLOSED at both ends (fixed: u = 0)
+
+       0.999 ┤              █│                                        
+             ┤             █││                                        
+             ┤             │ █│                                       
+       0.499 ┤             │  │                                       
+             ┤            █│  │                                       
+             ┤     ███████│   ████████│                               
+       0.000 ┤█████│                  ████████████████████████████████
+             └────────────────────────────────────────────────────────
+                               step 0  |  t = 0.00 ms
+
+       0.998 ┤                     █│                                 
+             ┤                    █││                                 
+             ┤                    │ █│                                
+       0.499 ┤                    │  │                                
+             ┤                   █│  █│                               
+             ┤ ██████████████████│    ███████│                        
+       0.000 ┤█│                             █████████████████████████
+             └────────────────────────────────────────────────────────
+                              step 80  |  t = 0.37 ms
+
+       0.998 ┤                            █│                          
+             ┤                            ││                          
+             ┤                           █│█│                         
+       0.499 ┤                           │  │                         
+             ┤                          █│  █│                        
+             ┤██████████████████████████·····█████████████████████████
+      -0.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                              step 160  |  t = 0.75 ms
+
+       0.998 ┤                                   █│                   
+             ┤                                   │█│                  
+             ┤                                  █│ │                  
+       0.499 ┤                                  │  │                  
+             ┤                                 █│  █│                 
+             ┤█████████████████████████████████·····██████████████████
+      -0.001 ┤                                                        
+             └────────────────────────────────────────────────────────
+                              step 240  |  t = 1.12 ms
+
+       0.998 ┤                                          █│            
+             ┤                                          │█│           
+             ┤                                         █│ │           
+       0.499 ┤                                         │  │           
+             ┤                                         │  █│          
+             ┤█████████████████████████████████████████····███████████
+      -0.001 ┤                                                        
+             └────────────────────────────────────────────────────────
+                              step 320  |  t = 1.49 ms
+
+       0.998 ┤                                                 █│     
+             ┤                                                 │█│    
+             ┤                                                █│ │    
+       0.499 ┤                                                │  │    
+             ┤                                                │  █│   
+             ┤████████████████████████████████████████████████····████
+      -0.001 ┤                                                        
+             └────────────────────────────────────────────────────────
+                              step 400  |  t = 1.87 ms
+
+
+    The pulse bounces between the closed ends:
+      • Each reflection at a closed end INVERTS the pulse
+      • After two reflections, the pulse is upright again
+      • The period is T = 2L/c (round trip)
+
+    For L = 1.0 m: T = 2(1.0)/343 = 5.83 ms → f = 171.5 Hz
+    This matches the fundamental frequency: f₁ = c/(2L) = 171.5 Hz ✓
+
+    The pipe has SELECTED this frequency through its geometry.
+    It's a physical Fourier filter.
+    
+
+========================================================================
+  PART 7: RESONANCE
+  The pipe amplifies its natural frequencies
+========================================================================
+
+    If you drive a pipe with a frequency matching one of its modes,
+    the wave builds up — RESONANCE. The amplitude grows until
+    damping balances the input.
+
+    Let's compute the frequency response: drive the pipe at
+    different frequencies and measure the steady-state amplitude.
+    
+
+    Frequency response of a 0.5 m closed pipe:
+
+       0.778 ┤     █│                                                 
+             ┤     ││                                                 
+             ┤     ││                                                 
+             ┤     ││           ██│                                   
+             ┤     │█│          │ │                                   
+       0.415 ┤     │ │         █│ │                                   
+             ┤    █│ │         │  █│         ██│                      
+             ┤    │  │         │   │        █│ █│         █│          
+             ┤   █│  ██│     ██│   █│      █│   █│     ███│████│    ██
+             ┤  █│     ██████│      ███████│     ██████│       █████│ 
+       0.052 ┤██│                                                     
+             └────────────────────────────────────────────────────────
+              Amplitude at pipe center vs. driving frequency (100–3000 Hz)
+
+    Predicted resonant frequencies:
+      Mode 1: f = 343.0 Hz
+      Mode 2: f = 686.0 Hz
+      Mode 3: f = 1029.0 Hz
+      Mode 4: f = 1372.0 Hz
+      Mode 5: f = 1715.0 Hz
+
+    Measured peaks in simulation:
+      f ≈ 337 Hz  (nearest mode: 343 Hz, error: 1.8%)
+      f ≈ 751 Hz  (nearest mode: 686 Hz, error: 9.5%)
+      f ≈ 1047 Hz  (nearest mode: 1029 Hz, error: 1.7%)
+      f ≈ 1284 Hz  (nearest mode: 1372 Hz, error: 6.4%)
+      f ≈ 1461 Hz  (nearest mode: 1372 Hz, error: 6.5%)
+
+    The peaks align with the predicted modes — the pipe RESONATES
+    at frequencies where standing waves fit its length.
+
+    This is the acoustic equivalent of a band-pass filter:
+    the pipe amplifies its resonant frequencies and attenuates
+    everything else. Musical instruments exploit this to select
+    the notes they produce.
+    
+
+========================================================================
+  PART 8: REAL INSTRUMENTS
+  Pipes, flutes, and organ stops
+========================================================================
+
+    Real instruments are acoustic waveguides with specific
+    boundary conditions and geometries:
+    
+    Instrument                 Boundary         Length         f₁ Overtone series
+    ────────────────────────── ────────────── ──────── ────────── ────────────────────
+    Flute (C5)                 open-open       0.325 m    527.7 Hz All harmonics
+    Clarinet (Bb3)             open-closed     0.660 m    129.9 Hz Odd harmonics only
+    Organ pipe 8' (C2)         open-open       2.640 m     65.0 Hz All harmonics
+    Organ pipe 8' stopped      open-closed     1.320 m     65.0 Hz Odd harmonics only
+    Piccolo (C6)               open-open       0.163 m   1052.1 Hz All harmonics
+    Didgeridoo (Bb1)           open-closed     1.470 m     58.3 Hz Odd harmonics only
+
+    Notice:
+      • An open-closed pipe is HALF the length to produce the same
+        fundamental as an open-open pipe. The "stopped" organ pipe
+        saves space by closing one end.
+
+      • The clarinet and didgeridoo sound "hollow" because they only
+        produce odd harmonics (1st, 3rd, 5th, ...). The even harmonics
+        are missing — the boundary conditions forbid them.
+
+      • The flute sounds "bright" because it has ALL harmonics.
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  The instrument's GEOMETRY determines what you HEAR.        │
+    │  The waveguide is the filter. The air is the medium.       │
+    │  The musician excites the modes. Physics does the rest.    │
+    └─────────────────────────────────────────────────────────────┘
+    
+
+========================================================================
+  SUMMARY: ACOUSTIC WAVEGUIDES
+========================================================================
+
+    This script explored sound confined by boundaries:
+
+      ✓ Closed-closed pipes: sin modes, all harmonics (f = nc/(2L))
+      ✓ Open-open pipes: cos modes, all harmonics (same frequencies)
+      ✓ Open-closed pipes: only ODD harmonics (f = (2n-1)c/(4L))
+      ✓ Cutoff frequency: higher modes can't propagate below f_c
+      ✓ Dispersion: v_group × v_phase = c² (always)
+      ✓ FDTD simulation: pulse bouncing in a pipe
+      ✓ Resonance: pipe amplifies its natural frequencies
+      ✓ Real instruments: geometry → sound character
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  NEXT: Script 03 applies the SAME physics to LIGHT.        │
+    │  Instead of rigid walls → refractive index boundaries.     │
+    │  Instead of pressure waves → electromagnetic waves.         │
+    │  Instead of pipe length → fiber core diameter.              │
+    │  Same equation. Different medium. Same math.               │
+    └─────────────────────────────────────────────────────────────┘
+    
+
+========================================================================
+  Done. Run 03_optical_waveguides.py next.
+========================================================================

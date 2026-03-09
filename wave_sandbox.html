@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wave Sandbox — Waveguides</title>
+<style>
+:root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --orange: #d29922;
+    --purple: #bc8cff;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    user-select: none;
+}
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+header {
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+header .subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+#controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+}
+#controls .group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+#controls .divider {
+    width: 1px;
+    height: 22px;
+    background: var(--border);
+    margin: 0 4px;
+}
+#controls label {
+    color: var(--text-secondary);
+    font-size: 11px;
+    white-space: nowrap;
+}
+select, button {
+    font-family: inherit;
+    font-size: 12px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    cursor: pointer;
+    outline: none;
+}
+select:hover, button:hover { border-color: var(--text-muted); }
+select:focus, button:focus { border-color: var(--accent); }
+button.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 600;
+}
+button.btn-green { background: #238636; border-color: #2ea043; }
+button.btn-green:hover { background: #2ea043; }
+button.btn-red { background: #8b1a1a; border-color: #a52a2a; }
+button.btn-red:hover { background: #a52a2a; }
+input[type="range"] {
+    width: 70px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+#canvas-wrap {
+    flex: 1;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    position: relative;
+}
+#wave-canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    cursor: crosshair;
+    touch-action: none;
+    max-width: 100%;
+    max-height: 100%;
+}
+#overlay-canvas {
+    position: absolute;
+    pointer-events: none;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+#status {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+    pointer-events: none;
+}
+#info-panel {
+    position: fixed;
+    bottom: 8px;
+    right: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    max-width: 320px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    z-index: 20;
+    max-height: calc(100% - 16px);
+    overflow-y: auto;
+}
+#info-panel .title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    cursor: pointer;
+}
+#info-panel .title::after { content: ' ▾'; font-size: 10px; }
+#info-panel.collapsed .title::after { content: ' ▸'; }
+#info-panel.collapsed #info-content { display: none; }
+#info-content p { margin: 4px 0; }
+#info-content kbd {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0 4px;
+    font-size: 10px;
+}
+#legend {
+    position: fixed;
+    bottom: 8px;
+    left: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    z-index: 10;
+    max-height: calc(100% - 16px);
+    overflow-y: auto;
+}
+#legend .swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    vertical-align: middle;
+    margin-right: 4px;
+    border: 1px solid var(--border);
+}
+#legend .row { margin: 2px 0; white-space: nowrap; }
+.tool-btn { min-width: 28px; text-align: center; font-size: 14px; padding: 2px 6px; }
+.slider-val { font-size: 11px; color: var(--text-muted); font-family: monospace; min-width: 18px; text-align: right; }
+@media (max-width: 800px) {
+    #controls { gap: 4px; padding: 4px 8px; }
+    input[type="range"] { width: 50px; }
+    #info-panel { max-width: 240px; font-size: 10px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+    <header>
+        <h1>🌊 Wave Sandbox</h1>
+        <span class="subtitle">Paint media. Drop waves. Watch physics.</span>
+    </header>
+    <div id="controls">
+        <div class="group">
+            <label>Preset</label>
+            <select id="sel-preset">
+                <option value="blank">Blank</option>
+                <option value="double-slit">Double Slit</option>
+                <option value="tsunami">Tsunami</option>
+                <option value="fiber">Fiber Optic</option>
+                <option value="pipe">Sound Pipe</option>
+                <option value="lens">Lens</option>
+                <option value="prism">Prism</option>
+            </select>
+        </div>
+        <div class="divider"></div>
+        <div class="group">
+            <label>Mode</label>
+            <select id="sel-mode">
+                <option value="fluid">Fluid</option>
+                <option value="acoustic">Acoustic</option>
+                <option value="optical">Optical</option>
+            </select>
+        </div>
+        <div class="divider"></div>
+        <div class="group">
+            <button class="tool-btn active" data-tool="paint" title="Paint medium">🎨</button>
+            <button class="tool-btn" data-tool="wall" title="Draw walls">🧱</button>
+            <button class="tool-btn" data-tool="source" title="Place oscillator">〰️</button>
+            <button class="tool-btn" data-tool="pulse" title="Drop pulse">💥</button>
+            <button class="tool-btn" data-tool="erase" title="Erase">⌫</button>
+        </div>
+        <div class="divider"></div>
+        <div class="group">
+            <label>Shape</label>
+            <select id="sel-shape">
+                <option value="free">Free</option>
+                <option value="line">Line</option>
+                <option value="rect">Rect</option>
+                <option value="filled-rect">Filled Rect</option>
+                <option value="circle">Circle</option>
+                <option value="filled-circle">Filled Circle</option>
+                <option value="ellipse">Ellipse</option>
+                <option value="filled-ellipse">Filled Ellipse</option>
+                <option value="diamond">Diamond</option>
+                <option value="filled-diamond">Filled Diamond</option>
+                <option value="star">Star</option>
+                <option value="filled-star">Filled Star</option>
+            </select>
+        </div>
+        <div class="group">
+            <label>Thickness</label>
+            <input type="range" id="rng-thickness" min="1" max="9" value="1">
+            <span id="val-thickness" class="slider-val">1</span>
+        </div>
+        <div class="divider"></div>
+        <div class="group">
+            <label>Medium</label>
+            <select id="sel-medium"></select>
+        </div>
+        <div class="group">
+            <label>Brush</label>
+            <input type="range" id="rng-brush" min="1" max="25" value="4">
+            <span id="val-brush" class="slider-val">4</span>
+        </div>
+        <div class="divider"></div>
+        <div class="group">
+            <label>Freq</label>
+            <input type="range" id="rng-freq" min="1" max="15" value="4">
+            <span id="val-freq" class="slider-val">4</span>
+        </div>
+        <div class="group">
+            <label>Gain</label>
+            <input type="range" id="rng-gain" min="1" max="50" value="30">
+            <span id="val-gain" class="slider-val">30</span>
+        </div>
+        <div class="group">
+            <label>Speed</label>
+            <input type="range" id="rng-speed" min="1" max="6" value="4">
+            <span id="val-speed" class="slider-val">4</span>
+        </div>
+        <div class="divider"></div>
+        <div class="group">
+            <button id="btn-undo" title="Undo (Ctrl+Z)">↩</button>
+            <button id="btn-redo" title="Redo (Ctrl+Shift+Z)">↪</button>
+            <button id="btn-play" class="btn-green">▶</button>
+            <button id="btn-reset">↺ Reset</button>
+            <button id="btn-clear" class="btn-red">✕ Clear</button>
+        </div>
+        <div class="group" style="margin-left:auto">
+            <span id="fps" style="font-family:monospace;font-size:11px;color:var(--text-muted)"></span>
+        </div>
+    </div>
+    <div id="canvas-wrap">
+        <canvas id="wave-canvas"></canvas>
+        <canvas id="overlay-canvas"></canvas>
+        <div id="status"></div>
+        <div id="legend"></div>
+        <div id="info-panel" class="collapsed">
+            <div class="title" onclick="this.parentElement.classList.toggle('collapsed')">ℹ About</div>
+            <div id="info-content">
+                <p><strong>Paint</strong> different media on the canvas and watch waves interact with them in real time.</p>
+                <p>The simulation uses FDTD (Finite-Difference Time-Domain) — the same method from the waveguides repo scripts.</p>
+                <p><strong>One equation governs everything:</strong><br>∂²u/∂t² = c(x,y)² · ∇²u</p>
+                <p>The only difference between sound, light, and water waves is what c(x,y) means.</p>
+                <p><strong>Controls:</strong></p>
+                <p>🎨 Paint medium · 🧱 Draw walls · 〰️ Place oscillator · 💥 Drop pulse · ⌫ Erase</p>
+                <p><kbd>Space</kbd> play/pause · <kbd>R</kbd> reset waves · <kbd>C</kbd> clear to preset · <kbd>1</kbd>-<kbd>4</kbd> select medium · Right-click erases</p>
+                <p id="preset-desc"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+//  CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════
+
+const NX = 300;
+const NY = 180;
+const CELLS = NX * NY;
+const DX = 1.0;
+const DT = 0.45;            // fixed time step (CFL safe for c_max = 1.0)
+const DAMP_WIDTH = 12;      // absorbing boundary layer width
+const SOURCE_AMP = 1.0;
+const PULSE_AMP = 2.5;
+const LOSS = 0.9993;      // gentle global dissipation per step
+
+// ═══════════════════════════════════════════════════════════════════════
+//  MEDIA DEFINITIONS
+// ═══════════════════════════════════════════════════════════════════════
+
+const MODES = {
+    fluid: [
+        { name: 'Deep Ocean',  speed: 1.00, color: [6, 14, 40] },
+        { name: 'Open Sea',    speed: 0.50, color: [12, 42, 82] },
+        { name: 'Shelf',       speed: 0.22, color: [30, 80, 120] },
+        { name: 'Shallows',    speed: 0.06, color: [60, 135, 165] },
+    ],
+    acoustic: [
+        { name: 'Helium',      speed: 1.00, color: [42, 35, 8] },
+        { name: 'Air',         speed: 0.34, color: [24, 24, 32] },
+        { name: 'Dense Gas',   speed: 0.15, color: [12, 28, 52] },
+        { name: 'Liquid',      speed: 0.05, color: [8, 48, 72] },
+    ],
+    optical: [
+        { name: 'Vacuum',      speed: 1.00, color: [6, 6, 16] },
+        { name: 'Glass',       speed: 0.67, color: [28, 12, 48] },
+        { name: 'Dense Glass', speed: 0.45, color: [55, 20, 75] },
+        { name: 'Diamond',     speed: 0.41, color: [85, 35, 100] },
+    ],
+};
+const WALL_COLOR = [42, 42, 48];
+const WALL_IDX = 4;       // medium index for wall
+const DEFAULT_IDX = 0;    // default medium index
+
+// ═══════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════
+
+let medium    = new Uint8Array(CELLS);   // medium index per cell (0-3, 4=wall)
+let c_sq      = new Float32Array(CELLS); // precomputed (c * DT / DX)²
+let damping   = new Float32Array(CELLS); // boundary damping factor
+let u_curr    = new Float32Array(CELLS);
+let u_prev    = new Float32Array(CELLS);
+let u_next    = new Float32Array(CELLS);
+const sources = [];  // { x, y, freq }
+
+let currentMode = 'fluid';
+let currentPreset = 'blank';
+let currentTool = 'paint';
+let currentMedium = 1;
+let brushSize = 4;
+let frequency = 4;
+let gain = 30;
+let substeps = 3;
+let frameSkip = 0;  // 0 = every frame, N = step once every N+1 frames
+let skipCounter = 0;
+let running = false;
+let simTime = 0;
+let dirty = true;  // render only when something changed
+
+let mouseDown = false;
+let mouseButton = 0;
+let lastPaintX = -1, lastPaintY = -1;
+let currentShape = 'free';
+let shapeAnchorX = -1, shapeAnchorY = -1;
+let lineThickness = 1;
+
+// Undo/redo stacks
+const MAX_UNDO = 50;
+const undoStack = [];
+const redoStack = [];
+
+// ═══════════════════════════════════════════════════════════════════════
+//  CANVAS SETUP
+// ═══════════════════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('wave-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = NX;
+canvas.height = NY;
+const imageData = ctx.createImageData(NX, NY);
+const pixels = imageData.data;
+const pixels32 = new Uint32Array(imageData.data.buffer);  // 1 write per pixel
+
+function resizeCanvas() {
+    const wrap = document.getElementById('canvas-wrap');
+    const aspect = NX / NY;
+    let w = wrap.clientWidth - 16;
+    let h = wrap.clientHeight - 16;
+    if (w <= 0 || h <= 0) return;  // not laid out yet
+    if (w / h > aspect) w = Math.floor(h * aspect);
+    else h = Math.floor(w / aspect);
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  INITIALIZATION
+// ═══════════════════════════════════════════════════════════════════════
+
+function initDamping() {
+    for (let i = 0; i < NY; i++) {
+        for (let j = 0; j < NX; j++) {
+            const dx = Math.min(j, NX - 1 - j);
+            const dy = Math.min(i, NY - 1 - i);
+            const d = Math.min(dx, dy);
+            if (d < DAMP_WIDTH) {
+                const t = d / DAMP_WIDTH;
+                damping[i * NX + j] = t * t * t;  // cubic taper: 0 at edge → 1 inside
+            } else {
+                damping[i * NX + j] = 1.0;
+            }
+        }
+    }
+}
+
+function recomputeCSq() {
+    const r2_factor = (DT / DX) * (DT / DX);
+    const media = MODES[currentMode];
+    for (let idx = 0; idx < CELLS; idx++) {
+        const m = medium[idx];
+        if (m === WALL_IDX) {
+            c_sq[idx] = 0;
+        } else {
+            const spd = media[m] ? media[m].speed : media[0].speed;
+            c_sq[idx] = spd * spd * r2_factor;
+        }
+    }
+}
+
+function resetWaves() {
+    u_curr.fill(0);
+    u_prev.fill(0);
+    u_next.fill(0);
+    simTime = 0;
+}
+
+function clearAll() {
+    medium.fill(DEFAULT_IDX);
+    sources.length = 0;
+    recomputeCSq();
+    resetWaves();
+}
+
+function takeSnapshot() {
+    return { medium: new Uint8Array(medium), sources: JSON.parse(JSON.stringify(sources)) };
+}
+
+function restoreSnapshot(snap) {
+    medium.set(snap.medium);
+    sources.length = 0;
+    for (const s of snap.sources) sources.push(s);
+    recomputeCSq();
+    dirty = true;
+}
+
+function pushUndo() {
+    undoStack.push(takeSnapshot());
+    if (undoStack.length > MAX_UNDO) undoStack.shift();
+    redoStack.length = 0;
+}
+
+function undo() {
+    if (undoStack.length === 0) return;
+    redoStack.push(takeSnapshot());
+    restoreSnapshot(undoStack.pop());
+}
+
+function redo() {
+    if (redoStack.length === 0) return;
+    undoStack.push(takeSnapshot());
+    restoreSnapshot(redoStack.pop());
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SIMULATION CORE
+// ═══════════════════════════════════════════════════════════════════════
+
+function step() {
+    // FDTD leapfrog with proper double-buffering.
+    // Local aliases avoid repeated global/property lookups in the hot loop.
+    const uc = u_curr, up = u_prev, un = u_next;
+    const cs = c_sq, dm = damping;
+    const loss = LOSS;
+    const ny1 = NY - 1, nx1 = NX - 1;
+
+    un.fill(0);   // walls & boundary edges stay zero automatically
+
+    for (let i = 1; i < ny1; i++) {
+        const row = i * NX;
+        for (let j = 1; j < nx1; j++) {
+            const idx = row + j;
+            const r2 = cs[idx];
+            if (r2 === 0) continue; // wall
+            const c = uc[idx];
+            const laplacian = uc[idx - NX] + uc[idx + NX]
+                            + uc[idx - 1]  + uc[idx + 1]
+                            - 4 * c;
+            un[idx] = (2 * c - up[idx] + r2 * laplacian) * dm[idx] * loss;
+        }
+    }
+
+    // Hard-drive sources — bounded sinusoidal boundary condition.
+    const slen = sources.length;
+    const sinT = simTime;
+    for (let si = 0; si < slen; si++) {
+        const src = sources[si];
+        const idx = src.y * NX + src.x;
+        if (idx >= 0 && idx < CELLS && medium[idx] !== WALL_IDX) {
+            un[idx] = SOURCE_AMP * Math.sin(src.freq * 0.03 * sinT);
+        }
+    }
+
+    // Rotate buffers: prev ← curr, curr ← next, next ← recycled prev
+    u_prev = uc;
+    u_curr = un;
+    u_next = up;
+
+    simTime++;
+}
+
+function dropPulse(cx, cy, radius) {
+    const r2 = radius * radius;
+    for (let di = -radius; di <= radius; di++) {
+        for (let dj = -radius; dj <= radius; dj++) {
+            const dist2 = di * di + dj * dj;
+            if (dist2 > r2) continue;
+            const ni = cy + di, nj = cx + dj;
+            if (ni < 1 || ni >= NY - 1 || nj < 1 || nj >= NX - 1) continue;
+            const idx = ni * NX + nj;
+            if (medium[idx] === WALL_IDX) continue;
+            u_curr[idx] += PULSE_AMP * Math.exp(-dist2 / (radius * radius * 0.25));
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  RENDERING
+// ═══════════════════════════════════════════════════════════════════════
+
+// Pre-baked RGBA32 wall pixel (little-endian: ABGR)
+const WALL_RGBA32 = (255 << 24) | (WALL_COLOR[2] << 16) | (WALL_COLOR[1] << 8) | WALL_COLOR[0];
+const SRC_RGBA32  = (255 << 24) | (70 << 16) | (220 << 8) | 50;  // green source marker
+
+// Flat color cache: rebuilt when mode changes. [m*3+0]=R, [m*3+1]=G, [m*3+2]=B
+let colorCache = new Uint8Array(15);  // up to 5 media × 3
+function rebuildColorCache() {
+    const media = MODES[currentMode];
+    for (let m = 0; m < media.length; m++) {
+        colorCache[m * 3]     = media[m].color[0];
+        colorCache[m * 3 + 1] = media[m].color[1];
+        colorCache[m * 3 + 2] = media[m].color[2];
+    }
+}
+
+function render() {
+    const p32 = pixels32;
+    const uc = u_curr;
+    const med = medium;
+    const cc = colorCache;
+    const g = gain * 0.08;
+    const cells = CELLS;
+
+    for (let idx = 0; idx < cells; idx++) {
+        const m = med[idx];
+
+        if (m === WALL_IDX) {
+            p32[idx] = WALL_RGBA32;
+            continue;
+        }
+
+        const ci = m * 3;
+        const bgR = cc[ci], bgG = cc[ci + 1], bgB = cc[ci + 2];
+        let amp = uc[idx] * g;
+        // Clamp to [-1, 1] branchlessly
+        if (amp > 1) amp = 1; else if (amp < -1) amp = -1;
+
+        let r, gv, b;
+        if (amp >= 0) {
+            r  = bgR + amp * (255 - bgR);
+            gv = bgG + amp * (210 - bgG);
+            b  = bgB + amp * 40;
+        } else {
+            const n = -amp;
+            r  = bgR + n * 15;
+            gv = bgG + n * (135 - bgG) * 0.7;
+            b  = bgB + n * (255 - bgB);
+        }
+        // Clamp and pack ABGR (little-endian)
+        if (r > 255) r = 255;
+        if (gv > 255) gv = 255;
+        if (b > 255) b = 255;
+        p32[idx] = 0xFF000000 | (b << 16) | (gv << 8) | r;
+    }
+
+    // Mark sources with bright green dots
+    const slen = sources.length;
+    for (let si = 0; si < slen; si++) {
+        const src = sources[si];
+        for (let di = -1; di <= 1; di++) {
+            for (let dj = -1; dj <= 1; dj++) {
+                const ni = src.y + di, nj = src.x + dj;
+                if (ni >= 0 && ni < NY && nj >= 0 && nj < NX) {
+                    p32[ni * NX + nj] = SRC_RGBA32;
+                }
+            }
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  PAINTING
+// ═══════════════════════════════════════════════════════════════════════
+
+function paintCell(cx, cy, medIdx) {
+    const r = brushSize;
+    const r2 = r * r;
+    const r2_factor = (DT / DX) * (DT / DX);
+    const media = MODES[currentMode];
+
+    for (let di = -r; di <= r; di++) {
+        for (let dj = -r; dj <= r; dj++) {
+            if (di * di + dj * dj > r2) continue;
+            const ni = cy + di, nj = cx + dj;
+            if (ni < 1 || ni >= NY - 1 || nj < 1 || nj >= NX - 1) continue;
+            const idx = ni * NX + nj;
+            medium[idx] = medIdx;
+            if (medIdx === WALL_IDX) {
+                c_sq[idx] = 0;
+                u_curr[idx] = 0;
+                u_prev[idx] = 0;
+                u_next[idx] = 0;
+            } else {
+                const spd = media[medIdx] ? media[medIdx].speed : media[0].speed;
+                c_sq[idx] = spd * spd * r2_factor;
+            }
+        }
+    }
+}
+
+function paintLine(x0, y0, x1, y1, medIdx) {
+    // Bresenham-ish interpolation for smooth brush strokes
+    const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
+    const steps = Math.max(dx, dy, 1);
+    for (let s = 0; s <= steps; s++) {
+        const t = s / steps;
+        const x = Math.round(x0 + (x1 - x0) * t);
+        const y = Math.round(y0 + (y1 - y0) * t);
+        paintCell(x, y, medIdx);
+    }
+}
+
+function eraseSourcesAt(cx, cy) {
+    const r = brushSize + 2;
+    for (let i = sources.length - 1; i >= 0; i--) {
+        const dx = sources[i].x - cx, dy = sources[i].y - cy;
+        if (dx * dx + dy * dy <= r * r) sources.splice(i, 1);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SHAPE DRAWING
+// ═══════════════════════════════════════════════════════════════════════
+
+function paintPixel(x, y, medIdx) {
+    if (x < 1 || x >= NX - 1 || y < 1 || y >= NY - 1) return;
+    const idx = y * NX + x;
+    const r2_factor = (DT / DX) * (DT / DX);
+    const media = MODES[currentMode];
+    medium[idx] = medIdx;
+    if (medIdx === WALL_IDX) {
+        c_sq[idx] = 0;
+        u_curr[idx] = 0; u_prev[idx] = 0; u_next[idx] = 0;
+    } else {
+        const spd = media[medIdx] ? media[medIdx].speed : media[0].speed;
+        c_sq[idx] = spd * spd * r2_factor;
+    }
+}
+
+function paintThickPixel(x, y, medIdx) {
+    if (lineThickness <= 1) { paintPixel(x, y, medIdx); return; }
+    const half = lineThickness >> 1;
+    for (let dy = -half; dy < lineThickness - half; dy++)
+        for (let dx = -half; dx < lineThickness - half; dx++)
+            paintPixel(x + dx, y + dy, medIdx);
+}
+
+function paintShapeLine(x0, y0, x1, y1, medIdx) {
+    const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
+    const steps = Math.max(dx, dy, 1);
+    for (let s = 0; s <= steps; s++) {
+        const t = s / steps;
+        paintThickPixel(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), medIdx);
+    }
+}
+
+function paintRect(x0, y0, x1, y1, medIdx, filled) {
+    const lx = Math.min(x0, x1), rx = Math.max(x0, x1);
+    const ly = Math.min(y0, y1), ry = Math.max(y0, y1);
+    if (filled) {
+        for (let y = ly; y <= ry; y++)
+            for (let x = lx; x <= rx; x++)
+                paintPixel(x, y, medIdx);
+    } else {
+        for (let x = lx; x <= rx; x++) { paintThickPixel(x, ly, medIdx); paintThickPixel(x, ry, medIdx); }
+        for (let y = ly + 1; y < ry; y++) { paintThickPixel(lx, y, medIdx); paintThickPixel(rx, y, medIdx); }
+    }
+}
+
+function paintCircle(cx, cy, r, medIdx, filled) {
+    if (r < 1) { paintPixel(cx, cy, medIdx); return; }
+    const r2 = r * r;
+    if (filled) {
+        for (let dy = -r; dy <= r; dy++)
+            for (let dx = -r; dx <= r; dx++)
+                if (dx * dx + dy * dy <= r2) paintPixel(cx + dx, cy + dy, medIdx);
+    } else {
+        // Midpoint circle
+        let x = r, y = 0, err = 1 - r;
+        while (x >= y) {
+            paintThickPixel(cx + x, cy + y, medIdx); paintThickPixel(cx - x, cy + y, medIdx);
+            paintThickPixel(cx + x, cy - y, medIdx); paintThickPixel(cx - x, cy - y, medIdx);
+            paintThickPixel(cx + y, cy + x, medIdx); paintThickPixel(cx - y, cy + x, medIdx);
+            paintThickPixel(cx + y, cy - x, medIdx); paintThickPixel(cx - y, cy - x, medIdx);
+            y++;
+            if (err < 0) { err += 2 * y + 1; }
+            else { x--; err += 2 * (y - x) + 1; }
+        }
+    }
+}
+
+function paintEllipse(cx, cy, rx, ry, medIdx, filled) {
+    if (rx < 1 && ry < 1) { paintPixel(cx, cy, medIdx); return; }
+    if (filled) {
+        for (let dy = -ry; dy <= ry; dy++)
+            for (let dx = -rx; dx <= rx; dx++)
+                if ((dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) <= 1)
+                    paintPixel(cx + dx, cy + dy, medIdx);
+    } else {
+        const steps = Math.max(rx, ry, 1) * 8;
+        for (let s = 0; s <= steps; s++) {
+            const a = (s / steps) * Math.PI * 2;
+            paintThickPixel(cx + Math.round(rx * Math.cos(a)), cy + Math.round(ry * Math.sin(a)), medIdx);
+        }
+    }
+}
+
+function paintDiamond(cx, cy, rx, ry, medIdx, filled) {
+    if (rx < 1 && ry < 1) { paintPixel(cx, cy, medIdx); return; }
+    if (filled) {
+        for (let dy = -ry; dy <= ry; dy++) {
+            const halfW = Math.round(rx * (1 - Math.abs(dy) / ry));
+            for (let dx = -halfW; dx <= halfW; dx++)
+                paintPixel(cx + dx, cy + dy, medIdx);
+        }
+    } else {
+        paintShapeLine(cx, cy - ry, cx + rx, cy, medIdx);
+        paintShapeLine(cx + rx, cy, cx, cy + ry, medIdx);
+        paintShapeLine(cx, cy + ry, cx - rx, cy, medIdx);
+        paintShapeLine(cx - rx, cy, cx, cy - ry, medIdx);
+    }
+}
+
+function paintStar(cx, cy, outerR, medIdx, filled) {
+    if (outerR < 2) { paintPixel(cx, cy, medIdx); return; }
+    const innerR = Math.round(outerR * 0.38);
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+        const r = (i % 2 === 0) ? outerR : innerR;
+        pts.push([cx + Math.round(r * Math.cos(a)), cy + Math.round(r * Math.sin(a))]);
+    }
+    if (filled) {
+        // Scanline fill
+        const yMin = cy - outerR, yMax = cy + outerR;
+        for (let y = yMin; y <= yMax; y++) {
+            const xHits = [];
+            for (let i = 0; i < pts.length; i++) {
+                const [x0, y0] = pts[i];
+                const [x1, y1] = pts[(i + 1) % pts.length];
+                if ((y0 <= y && y1 > y) || (y1 <= y && y0 > y)) {
+                    const t = (y - y0) / (y1 - y0);
+                    xHits.push(Math.round(x0 + t * (x1 - x0)));
+                }
+            }
+            xHits.sort((a, b) => a - b);
+            for (let i = 0; i < xHits.length - 1; i += 2)
+                for (let x = xHits[i]; x <= xHits[i + 1]; x++)
+                    paintPixel(x, y, medIdx);
+        }
+    } else {
+        for (let i = 0; i < pts.length; i++)
+            paintShapeLine(pts[i][0], pts[i][1], pts[(i + 1) % pts.length][0], pts[(i + 1) % pts.length][1], medIdx);
+    }
+}
+
+function commitShape(x0, y0, x1, y1, medIdx) {
+    const dx = x1 - x0, dy = y1 - y0;
+    switch (currentShape) {
+        case 'line':          paintShapeLine(x0, y0, x1, y1, medIdx); break;
+        case 'rect':          paintRect(x0, y0, x1, y1, medIdx, false); break;
+        case 'filled-rect':   paintRect(x0, y0, x1, y1, medIdx, true); break;
+        case 'circle': {
+            const r = Math.round(Math.hypot(dx, dy));
+            paintCircle(x0, y0, r, medIdx, false); break;
+        }
+        case 'filled-circle': {
+            const r = Math.round(Math.hypot(dx, dy));
+            paintCircle(x0, y0, r, medIdx, true); break;
+        }
+        case 'ellipse':
+            paintEllipse(x0, y0, Math.abs(dx), Math.abs(dy), medIdx, false); break;
+        case 'filled-ellipse':
+            paintEllipse(x0, y0, Math.abs(dx), Math.abs(dy), medIdx, true); break;
+        case 'diamond':
+            paintDiamond(x0, y0, Math.abs(dx), Math.abs(dy), medIdx, false); break;
+        case 'filled-diamond':
+            paintDiamond(x0, y0, Math.abs(dx), Math.abs(dy), medIdx, true); break;
+        case 'star': {
+            const r = Math.round(Math.hypot(dx, dy));
+            paintStar(x0, y0, r, medIdx, false); break;
+        }
+        case 'filled-star': {
+            const r = Math.round(Math.hypot(dx, dy));
+            paintStar(x0, y0, r, medIdx, true); break;
+        }
+    }
+}
+
+// Overlay preview
+const overlayCanvas = document.getElementById('overlay-canvas');
+const overlayCtx = overlayCanvas.getContext('2d');
+overlayCanvas.width = NX;
+overlayCanvas.height = NY;
+
+function syncOverlaySize() {
+    overlayCanvas.style.width = canvas.style.width;
+    overlayCanvas.style.height = canvas.style.height;
+    overlayCanvas.style.left = canvas.offsetLeft + 'px';
+    overlayCanvas.style.top = canvas.offsetTop + 'px';
+}
+
+function drawPreview(x0, y0, x1, y1) {
+    overlayCtx.clearRect(0, 0, NX, NY);
+    overlayCtx.strokeStyle = 'rgba(88,166,255,0.7)';
+    overlayCtx.fillStyle = 'rgba(88,166,255,0.15)';
+    overlayCtx.lineWidth = lineThickness;
+    const dx = x1 - x0, dy = y1 - y0;
+    const isFilled = currentShape.startsWith('filled');
+    switch (currentShape) {
+        case 'line':
+            overlayCtx.beginPath();
+            overlayCtx.moveTo(x0 + 0.5, y0 + 0.5);
+            overlayCtx.lineTo(x1 + 0.5, y1 + 0.5);
+            overlayCtx.stroke();
+            break;
+        case 'rect': case 'filled-rect': {
+            const lx = Math.min(x0, x1), ly = Math.min(y0, y1);
+            const w = Math.abs(dx), h = Math.abs(dy);
+            if (isFilled) overlayCtx.fillRect(lx, ly, w, h);
+            overlayCtx.strokeRect(lx + 0.5, ly + 0.5, w, h);
+            break;
+        }
+        case 'circle': case 'filled-circle': {
+            const r = Math.hypot(dx, dy);
+            overlayCtx.beginPath();
+            overlayCtx.arc(x0 + 0.5, y0 + 0.5, r, 0, Math.PI * 2);
+            if (isFilled) overlayCtx.fill();
+            overlayCtx.stroke();
+            break;
+        }
+        case 'ellipse': case 'filled-ellipse': {
+            const rx = Math.abs(dx), ry = Math.abs(dy);
+            overlayCtx.beginPath();
+            overlayCtx.ellipse(x0 + 0.5, y0 + 0.5, rx, ry, 0, 0, Math.PI * 2);
+            if (isFilled) overlayCtx.fill();
+            overlayCtx.stroke();
+            break;
+        }
+        case 'diamond': case 'filled-diamond': {
+            const rx = Math.abs(dx), ry = Math.abs(dy);
+            overlayCtx.beginPath();
+            overlayCtx.moveTo(x0 + 0.5, y0 - ry + 0.5);
+            overlayCtx.lineTo(x0 + rx + 0.5, y0 + 0.5);
+            overlayCtx.lineTo(x0 + 0.5, y0 + ry + 0.5);
+            overlayCtx.lineTo(x0 - rx + 0.5, y0 + 0.5);
+            overlayCtx.closePath();
+            if (isFilled) overlayCtx.fill();
+            overlayCtx.stroke();
+            break;
+        }
+        case 'star': case 'filled-star': {
+            const outerR = Math.hypot(dx, dy);
+            const innerR = outerR * 0.38;
+            overlayCtx.beginPath();
+            for (let i = 0; i < 10; i++) {
+                const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+                const r = (i % 2 === 0) ? outerR : innerR;
+                const px = x0 + r * Math.cos(a) + 0.5;
+                const py = y0 + r * Math.sin(a) + 0.5;
+                if (i === 0) overlayCtx.moveTo(px, py);
+                else overlayCtx.lineTo(px, py);
+            }
+            overlayCtx.closePath();
+            if (isFilled) overlayCtx.fill();
+            overlayCtx.stroke();
+            break;
+        }
+    }
+}
+
+function clearOverlay() {
+    overlayCtx.clearRect(0, 0, NX, NY);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  PRESETS
+// ═══════════════════════════════════════════════════════════════════════
+
+function loadPreset(name) {
+    clearAll();
+    currentPreset = name;
+    // Pause so the user can inspect / modify before pressing play
+    running = false;
+    document.getElementById('btn-play').textContent = '▶';
+    const desc = document.getElementById('preset-desc');
+
+    switch (name) {
+    case 'double-slit': {
+        setMode('fluid');
+        // Wall across the middle with two slits
+        const wallX = Math.floor(NX * 0.4);
+        const slitW = 4;
+        const slitGap = 24;
+        const cy = Math.floor(NY / 2);
+        for (let i = 0; i < NY; i++) {
+            for (let j = wallX - 1; j <= wallX + 1; j++) {
+                const idx = i * NX + j;
+                const dy = Math.abs(i - cy);
+                if (dy > slitGap / 2 + slitW || (dy > slitW / 2 && dy < slitGap / 2)) {
+                    medium[idx] = WALL_IDX;
+                }
+            }
+        }
+        recomputeCSq();
+        // Plane wave source on the left
+        for (let i = Math.floor(NY * 0.15); i < Math.floor(NY * 0.85); i++) {
+            sources.push({ x: 15, y: i, freq: frequency });
+        }
+        desc.innerHTML = '<strong>Double Slit:</strong> A plane wave passes through two gaps, creating an interference pattern. This is diffraction — the wave bends around obstacles.';
+        break;
+    }
+    case 'tsunami': {
+        setMode('fluid');
+        // Depth gradient: deep → shelf → coast
+        for (let i = 0; i < NY; i++) {
+            for (let j = 0; j < NX; j++) {
+                const x = j / NX;
+                if (x > 0.6 && x < 0.78) medium[i * NX + j] = 1;       // open sea
+                else if (x >= 0.78 && x < 0.88) medium[i * NX + j] = 2; // shelf
+                else if (x >= 0.88 && x < 0.96) medium[i * NX + j] = 3; // shallows
+                else if (x >= 0.96) medium[i * NX + j] = WALL_IDX;      // coast wall
+            }
+        }
+        // Small island
+        const islandX = Math.floor(NX * 0.5), islandY = Math.floor(NY * 0.35);
+        for (let di = -6; di <= 6; di++) {
+            for (let dj = -6; dj <= 6; dj++) {
+                if (di * di + dj * dj <= 36) {
+                    const idx = (islandY + di) * NX + (islandX + dj);
+                    if (idx >= 0 && idx < CELLS) medium[idx] = WALL_IDX;
+                }
+            }
+        }
+        recomputeCSq();
+        // Drop initial earthquake pulse so the user sees it immediately
+        dropPulse(Math.floor(NX * 0.15), Math.floor(NY * 0.5), 12);
+        desc.innerHTML = '<strong>Tsunami:</strong> A pulse in deep water slows and amplifies as it hits the shelf. Watch the wave wrap around the island (diffraction) and grow taller at the coast (shoaling). c = √(g·h).';
+        break;
+    }
+    case 'fiber': {
+        setMode('optical');
+        // Horizontal fiber: slow core, fast cladding
+        const coreHalf = 8;
+        const cy2 = Math.floor(NY / 2);
+        for (let i = 0; i < NY; i++) {
+            for (let j = 0; j < NX; j++) {
+                if (Math.abs(i - cy2) < coreHalf) {
+                    medium[i * NX + j] = 2;  // Dense Glass (slow core)
+                } else {
+                    medium[i * NX + j] = 0;  // Vacuum (fast cladding)
+                }
+            }
+        }
+        recomputeCSq();
+        // Source at left end of core
+        sources.push({ x: 18, y: cy2, freq: frequency });
+        desc.innerHTML = '<strong>Fiber Optic:</strong> Light is guided in the slow core via total internal reflection. The narrow core confines the wave. Try changing frequency to excite different modes.';
+        break;
+    }
+    case 'pipe': {
+        setMode('acoustic');
+        // Two parallel walls forming a pipe
+        const pipeHalf = 14;
+        const cy3 = Math.floor(NY / 2);
+        for (let j = Math.floor(NX * 0.08); j < Math.floor(NX * 0.92); j++) {
+            for (let w = 0; w < 2; w++) {
+                medium[(cy3 - pipeHalf - w) * NX + j] = WALL_IDX;
+                medium[(cy3 + pipeHalf + w) * NX + j] = WALL_IDX;
+            }
+        }
+        // Closed right end
+        for (let i = cy3 - pipeHalf; i <= cy3 + pipeHalf; i++) {
+            medium[i * NX + Math.floor(NX * 0.92)] = WALL_IDX;
+            medium[i * NX + Math.floor(NX * 0.92) + 1] = WALL_IDX;
+        }
+        // Fill pipe with air (medium 1)
+        for (let i = cy3 - pipeHalf + 2; i <= cy3 + pipeHalf - 2; i++) {
+            for (let j = Math.floor(NX * 0.08) + 2; j < Math.floor(NX * 0.92); j++) {
+                medium[i * NX + j] = 1;
+            }
+        }
+        recomputeCSq();
+        sources.push({ x: Math.floor(NX * 0.1), y: cy3, freq: frequency });
+        desc.innerHTML = '<strong>Sound Pipe:</strong> Sound waves reflect between walls and create standing wave patterns. The closed end reflects perfectly. Try adjusting frequency to find resonances.';
+        break;
+    }
+    case 'lens': {
+        setMode('optical');
+        // Circular region of slow medium → converging lens
+        const cx = Math.floor(NX * 0.45);
+        const cy4 = Math.floor(NY / 2);
+        const lensR = 22;
+        for (let i = 0; i < NY; i++) {
+            for (let j = 0; j < NX; j++) {
+                const dx2 = (j - cx) * (j - cx);
+                const dy2 = (i - cy4) * (i - cy4);
+                if (dx2 + dy2 < lensR * lensR) {
+                    medium[i * NX + j] = 2;  // Dense Glass
+                }
+            }
+        }
+        recomputeCSq();
+        // Plane wave source
+        for (let i = Math.floor(NY * 0.2); i < Math.floor(NY * 0.8); i++) {
+            sources.push({ x: 15, y: i, freq: frequency });
+        }
+        desc.innerHTML = '<strong>Lens:</strong> A circular region of slow medium refracts the plane wave, focusing it to a point. This is how optical lenses work — Snell\'s law applied circularly.';
+        break;
+    }
+    case 'prism': {
+        setMode('optical');
+        // Triangle of dense glass
+        const px = Math.floor(NX * 0.4);
+        const py = Math.floor(NY / 2);
+        const size = 28;
+        for (let i = 0; i < NY; i++) {
+            for (let j = 0; j < NX; j++) {
+                const lx = j - px, ly = i - py;
+                // Equilateral triangle test
+                if (ly > -size * 0.6 && ly < size * 0.6 &&
+                    lx > -size * 0.3 && lx < size * 0.6 - Math.abs(ly) * 0.5) {
+                    medium[i * NX + j] = 2;  // Dense Glass
+                }
+            }
+        }
+        recomputeCSq();
+        // Angled plane wave
+        for (let i = Math.floor(NY * 0.3); i < Math.floor(NY * 0.55); i++) {
+            sources.push({ x: 15, y: i, freq: frequency });
+        }
+        desc.innerHTML = '<strong>Prism:</strong> Waves slow down inside the dense triangle and refract at both surfaces. In real optics, different frequencies refract differently (dispersion).';
+        break;
+    }
+    default: // blank
+        desc.innerHTML = 'Paint freely! Use the tools to create media regions, place sources, and explore wave physics.';
+        break;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════════════════════════════
+
+function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('sel-mode').value = mode;
+    populateMediumDropdown();
+    recomputeCSq();
+    updateLegend();
+    rebuildColorCache();
+    dirty = true;
+}
+
+function populateMediumDropdown() {
+    const sel = document.getElementById('sel-medium');
+    const media = MODES[currentMode];
+    sel.innerHTML = '';
+    media.forEach((m, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = m.name;
+        sel.appendChild(opt);
+    });
+    if (currentMedium >= media.length) currentMedium = 1;
+    sel.value = currentMedium;
+}
+
+function updateLegend() {
+    const legend = document.getElementById('legend');
+    const media = MODES[currentMode];
+    let html = '';
+    media.forEach(m => {
+        const [r, g, b] = m.color;
+        html += `<div class="row"><span class="swatch" style="background:rgb(${r},${g},${b})"></span>${m.name} <span style="color:var(--text-muted)">(c=${m.speed.toFixed(2)})</span></div>`;
+    });
+    html += `<div class="row"><span class="swatch" style="background:rgb(${WALL_COLOR.join(',')})"></span>Wall</div>`;
+    legend.innerHTML = html;
+}
+
+function setTool(tool) {
+    currentTool = tool;
+    document.querySelectorAll('.tool-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tool === tool);
+    });
+}
+
+function canvasCoord(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / rect.width * NX);
+    const y = Math.floor((e.clientY - rect.top) / rect.height * NY);
+    return [Math.max(0, Math.min(NX - 1, x)), Math.max(0, Math.min(NY - 1, y))];
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  EVENT HANDLERS
+// ═══════════════════════════════════════════════════════════════════════
+
+function isShapeMode() {
+    return currentShape !== 'free' &&
+           (currentTool === 'paint' || currentTool === 'wall' || currentTool === 'erase');
+}
+
+function getActiveMedium() {
+    if (currentTool === 'wall') return WALL_IDX;
+    if (currentTool === 'erase') return DEFAULT_IDX;
+    return currentMedium;
+}
+
+canvas.addEventListener('mousedown', e => {
+    e.preventDefault();
+    mouseDown = true;
+    mouseButton = e.button;
+    const [cx, cy] = canvasCoord(e);
+
+    if (isShapeMode() && e.button !== 2) {
+        shapeAnchorX = cx; shapeAnchorY = cy;
+        syncOverlaySize();
+        return;
+    }
+
+    pushUndo();
+
+    if (e.button === 2 || currentTool === 'erase') {
+        paintCell(cx, cy, DEFAULT_IDX);
+        eraseSourcesAt(cx, cy);
+        lastPaintX = cx; lastPaintY = cy;
+    } else if (currentTool === 'paint') {
+        paintCell(cx, cy, currentMedium);
+        lastPaintX = cx; lastPaintY = cy;
+    } else if (currentTool === 'wall') {
+        paintCell(cx, cy, WALL_IDX);
+        lastPaintX = cx; lastPaintY = cy;
+    } else if (currentTool === 'source') {
+        const exists = sources.some(s => Math.abs(s.x - cx) < 3 && Math.abs(s.y - cy) < 3);
+        if (!exists) sources.push({ x: cx, y: cy, freq: frequency });
+    } else if (currentTool === 'pulse') {
+        dropPulse(cx, cy, brushSize + 2);
+    }
+    dirty = true;
+});
+
+canvas.addEventListener('mousemove', e => {
+    if (!mouseDown) return;
+    const [cx, cy] = canvasCoord(e);
+
+    if (isShapeMode() && shapeAnchorX >= 0 && mouseButton !== 2) {
+        drawPreview(shapeAnchorX, shapeAnchorY, cx, cy);
+        return;
+    }
+
+    if (mouseButton === 2 || currentTool === 'erase') {
+        if (lastPaintX >= 0) paintLine(lastPaintX, lastPaintY, cx, cy, DEFAULT_IDX);
+        eraseSourcesAt(cx, cy);
+        lastPaintX = cx; lastPaintY = cy;
+    } else if (currentTool === 'paint') {
+        if (lastPaintX >= 0) paintLine(lastPaintX, lastPaintY, cx, cy, currentMedium);
+        lastPaintX = cx; lastPaintY = cy;
+    } else if (currentTool === 'wall') {
+        if (lastPaintX >= 0) paintLine(lastPaintX, lastPaintY, cx, cy, WALL_IDX);
+        lastPaintX = cx; lastPaintY = cy;
+    }
+    dirty = true;
+});
+
+canvas.addEventListener('mouseup', e => {
+    if (isShapeMode() && shapeAnchorX >= 0 && mouseButton !== 2) {
+        const [cx, cy] = canvasCoord(e);
+        pushUndo();
+        commitShape(shapeAnchorX, shapeAnchorY, cx, cy, getActiveMedium());
+        clearOverlay();
+        dirty = true;
+    }
+    mouseDown = false;
+    lastPaintX = -1; lastPaintY = -1;
+    shapeAnchorX = -1; shapeAnchorY = -1;
+});
+canvas.addEventListener('mouseleave', () => {
+    mouseDown = false;
+    lastPaintX = -1; lastPaintY = -1;
+    shapeAnchorX = -1; shapeAnchorY = -1;
+    clearOverlay();
+});
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+// Touch support — reuse the same logic as mouse events
+function touchCoord(e) {
+    const touch = e.touches[0] || e.changedTouches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((touch.clientX - rect.left) / rect.width * NX);
+    const y = Math.floor((touch.clientY - rect.top) / rect.height * NY);
+    return [Math.max(0, Math.min(NX - 1, x)), Math.max(0, Math.min(NY - 1, y))];
+}
+
+canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    mouseDown = true;
+    mouseButton = 0;
+    const [cx, cy] = touchCoord(e);
+
+    if (isShapeMode()) {
+        shapeAnchorX = cx; shapeAnchorY = cy;
+        syncOverlaySize();
+        return;
+    }
+
+    pushUndo();
+
+    if (currentTool === 'erase') {
+        paintCell(cx, cy, DEFAULT_IDX);
+        eraseSourcesAt(cx, cy);
+        lastPaintX = cx; lastPaintY = cy;
+    } else if (currentTool === 'paint') {
+        paintCell(cx, cy, currentMedium);
+        lastPaintX = cx; lastPaintY = cy;
+    } else if (currentTool === 'wall') {
+        paintCell(cx, cy, WALL_IDX);
+        lastPaintX = cx; lastPaintY = cy;
+    } else if (currentTool === 'source') {
+        const exists = sources.some(s => Math.abs(s.x - cx) < 3 && Math.abs(s.y - cy) < 3);
+        if (!exists) sources.push({ x: cx, y: cy, freq: frequency });
+    } else if (currentTool === 'pulse') {
+        dropPulse(cx, cy, brushSize + 2);
+    }
+    dirty = true;
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!mouseDown) return;
+    const [cx, cy] = touchCoord(e);
+
+    if (isShapeMode() && shapeAnchorX >= 0) {
+        drawPreview(shapeAnchorX, shapeAnchorY, cx, cy);
+        return;
+    }
+
+    if (currentTool === 'erase') {
+        if (lastPaintX >= 0) paintLine(lastPaintX, lastPaintY, cx, cy, DEFAULT_IDX);
+        eraseSourcesAt(cx, cy);
+        lastPaintX = cx; lastPaintY = cy;
+    } else if (currentTool === 'paint') {
+        if (lastPaintX >= 0) paintLine(lastPaintX, lastPaintY, cx, cy, currentMedium);
+        lastPaintX = cx; lastPaintY = cy;
+    } else if (currentTool === 'wall') {
+        if (lastPaintX >= 0) paintLine(lastPaintX, lastPaintY, cx, cy, WALL_IDX);
+        lastPaintX = cx; lastPaintY = cy;
+    }
+    dirty = true;
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+    e.preventDefault();
+    if (isShapeMode() && shapeAnchorX >= 0) {
+        const [cx, cy] = touchCoord(e);
+        pushUndo();
+        commitShape(shapeAnchorX, shapeAnchorY, cx, cy, getActiveMedium());
+        clearOverlay();
+        dirty = true;
+    }
+    mouseDown = false;
+    lastPaintX = -1; lastPaintY = -1;
+    shapeAnchorX = -1; shapeAnchorY = -1;
+}, { passive: false });
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
+    if ((e.ctrlKey || e.metaKey) && ((e.shiftKey && e.key.toLowerCase() === 'z') || e.key.toLowerCase() === 'y')) { e.preventDefault(); redo(); return; }
+    switch (e.key) {
+        case ' ': e.preventDefault(); togglePlay(); break;
+        case 'r': case 'R':
+            resetWaves();
+            running = false;
+            document.getElementById('btn-play').textContent = '▶';
+            dirty = true;
+            break;
+        case 'c': case 'C':
+            document.getElementById('sel-preset').value = currentPreset;
+            loadPreset(currentPreset);
+            dirty = true;
+            break;
+        case '1': currentMedium = 0; document.getElementById('sel-medium').value = 0; break;
+        case '2': currentMedium = 1; document.getElementById('sel-medium').value = 1; break;
+        case '3': currentMedium = 2; document.getElementById('sel-medium').value = 2; break;
+        case '4': currentMedium = 3; document.getElementById('sel-medium').value = 3; break;
+    }
+});
+
+// Control panel bindings
+document.querySelectorAll('.tool-btn').forEach(b => {
+    b.addEventListener('click', () => setTool(b.dataset.tool));
+});
+
+document.getElementById('sel-preset').addEventListener('change', e => {
+    pushUndo();
+    loadPreset(e.target.value);
+    dirty = true;
+});
+
+document.getElementById('sel-mode').addEventListener('change', e => {
+    setMode(e.target.value);
+});
+
+document.getElementById('sel-medium').addEventListener('change', e => {
+    currentMedium = parseInt(e.target.value);
+});
+
+document.getElementById('sel-shape').addEventListener('change', e => {
+    currentShape = e.target.value;
+});
+
+document.getElementById('rng-thickness').addEventListener('input', e => {
+    lineThickness = parseInt(e.target.value);
+    document.getElementById('val-thickness').textContent = lineThickness;
+});
+
+document.getElementById('rng-brush').addEventListener('input', e => {
+    brushSize = parseInt(e.target.value);
+    document.getElementById('val-brush').textContent = brushSize;
+});
+
+document.getElementById('rng-freq').addEventListener('input', e => {
+    frequency = parseInt(e.target.value);
+    document.getElementById('val-freq').textContent = frequency;
+    for (const s of sources) s.freq = frequency;
+});
+
+document.getElementById('rng-gain').addEventListener('input', e => {
+    gain = parseInt(e.target.value);
+    document.getElementById('val-gain').textContent = gain;
+    dirty = true;
+});
+
+// Speed mapping: 1=very slow, 2=slow, 3=normal, 4=default, 5=fast, 6=faster
+const SPEED_MAP = [
+    /*1*/ { substeps: 1, frameSkip: 3 },  // 1 step every 4 frames  (~15 steps/s)
+    /*2*/ { substeps: 1, frameSkip: 1 },  // 1 step every 2 frames  (~30 steps/s)
+    /*3*/ { substeps: 1, frameSkip: 0 },  // 1 step per frame        (~60 steps/s)
+    /*4*/ { substeps: 2, frameSkip: 0 },  // 2 steps per frame      (~120 steps/s)
+    /*5*/ { substeps: 3, frameSkip: 0 },  // 3 steps per frame      (~180 steps/s)
+    /*6*/ { substeps: 4, frameSkip: 0 },  // 4 steps per frame      (~240 steps/s)
+];
+
+function applySpeed(level) {
+    const s = SPEED_MAP[level - 1];
+    substeps = s.substeps;
+    frameSkip = s.frameSkip;
+    skipCounter = 0;
+    document.getElementById('val-speed').textContent = level;
+}
+
+document.getElementById('rng-speed').addEventListener('input', e => {
+    applySpeed(parseInt(e.target.value));
+});
+
+function togglePlay() {
+    running = !running;
+    document.getElementById('btn-play').textContent = running ? '⏸' : '▶';
+    dirty = true;
+}
+
+document.getElementById('btn-play').addEventListener('click', togglePlay);
+document.getElementById('btn-reset').addEventListener('click', () => {
+    resetWaves();
+    running = false;
+    document.getElementById('btn-play').textContent = '▶';
+    dirty = true;
+});
+document.getElementById('btn-clear').addEventListener('click', () => {
+    pushUndo();
+    document.getElementById('sel-preset').value = currentPreset;
+    loadPreset(currentPreset);
+    dirty = true;
+});
+document.getElementById('btn-undo').addEventListener('click', undo);
+document.getElementById('btn-redo').addEventListener('click', redo);
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ANIMATION LOOP
+// ═══════════════════════════════════════════════════════════════════════
+
+let frameCount = 0;
+let lastFpsTime = performance.now();
+const fpsEl = document.getElementById('fps');
+
+function animate() {
+    if (running) {
+        if (frameSkip > 0) {
+            skipCounter++;
+            if (skipCounter > frameSkip) {
+                skipCounter = 0;
+                for (let s = 0; s < substeps; s++) step();
+                dirty = true;
+            }
+        } else {
+            for (let s = 0; s < substeps; s++) step();
+            dirty = true;
+        }
+    }
+
+    // Only repaint when state has actually changed
+    if (dirty) {
+        render();
+        dirty = false;
+    }
+
+    // FPS counter
+    frameCount++;
+    const now = performance.now();
+    if (now - lastFpsTime > 500) {
+        const fps = frameCount / ((now - lastFpsTime) / 1000);
+        fpsEl.textContent = `${Math.round(fps)} fps`;
+        frameCount = 0;
+        lastFpsTime = now;
+    }
+
+    requestAnimationFrame(animate);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════════════════
+
+function boot() {
+    initDamping();
+    populateMediumDropdown();
+    updateLegend();
+    recomputeCSq();
+    resizeCanvas();
+    // ResizeObserver reliably fires after layout changes (fullscreen, maximize, etc.)
+    new ResizeObserver(() => { resizeCanvas(); syncOverlaySize(); dirty = true; })
+        .observe(document.getElementById('canvas-wrap'));
+
+    // Start paused on blank canvas — user presses play when ready
+    loadPreset('blank');
+    rebuildColorCache();
+    applySpeed(4);  // default speed level
+    render();          // paint the initial frame once
+    dirty = false;
+    animate();
+}
+
+boot();
+</script>
+</body>
+</html>

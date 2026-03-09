@@ -1,0 +1,512 @@
+
+========================================================================
+  NUMERICAL METHODS — Simulating Waves on a Computer
+  FDTD, stability, and turning PDEs into code
+========================================================================
+
+========================================================================
+  PART 1: FINITE DIFFERENCES
+  Replacing calculus with arithmetic
+========================================================================
+
+    A derivative is a limit:
+
+        du/dx = lim(Δx→0) [u(x+Δx) − u(x)] / Δx
+
+    On a computer, we can't take Δx → 0. We pick a small but
+    FINITE Δx and approximate:
+
+        du/dx ≈ [u(x+Δx) − u(x)] / Δx          (forward difference)
+        du/dx ≈ [u(x) − u(x−Δx)] / Δx          (backward difference)
+        du/dx ≈ [u(x+Δx) − u(x−Δx)] / (2Δx)   (central difference) ← better!
+
+    The SECOND derivative (what we need for the wave equation):
+
+        d²u/dx² ≈ [u(x+Δx) − 2u(x) + u(x−Δx)] / Δx²
+
+    This is the CENTRAL DIFFERENCE formula. It's at the heart
+    of every FDTD simulation.
+    
+    ── Accuracy test: d(sin(x))/dx = cos(x) at x = 1.0 ──
+
+              Δx        Forward        Central    Forward err    Central err
+    ──────────── ────────────── ────────────── ────────────── ──────────────
+           1e-01   0.4973637525   0.5394022522       4.29e-02       9.00e-04
+           1e-02   0.5360859810   0.5402933009       4.22e-03       9.00e-06
+           1e-03   0.5398814804   0.5403022158       4.21e-04       9.01e-08
+           1e-04   0.5402602314   0.5403023050       4.21e-05       9.00e-10
+           1e-05   0.5402980985   0.5403023059       4.21e-06       1.11e-11
+           1e-06   0.5403018851   0.5403023059       4.21e-07       2.77e-11
+           1e-07   0.5403022640   0.5403023057       4.18e-08       1.94e-10
+           1e-08   0.5403023029   0.5403023084       2.97e-09       2.58e-09
+
+    Exact: cos(1.0) = 0.5403023059
+
+    Central difference converges as O(Δx²) — 100× smaller Δx → 10,000× less error.
+    Forward difference converges as O(Δx) — only 100× less error.
+
+    This is why we ALWAYS use central differences for the wave equation.
+
+    Note: at very small Δx (below ~10⁻⁸), floating-point roundoff
+    takes over and error INCREASES. This is the IEEE 754 precision
+    limit from repo 1 — the same bit-level constraint that gave
+    us the fast inverse square root.
+    
+
+========================================================================
+  PART 2: THE FDTD SCHEME
+  Discretizing the wave equation
+========================================================================
+
+    The wave equation: ∂²u/∂t² = c² · ∂²u/∂x²
+
+    Replace BOTH derivatives with central differences:
+
+    TIME:
+        ∂²u/∂t² ≈ [u(x, t+Δt) − 2u(x, t) + u(x, t−Δt)] / Δt²
+
+    SPACE:
+        ∂²u/∂x² ≈ [u(x+Δx, t) − 2u(x, t) + u(x−Δx, t)] / Δx²
+
+    Plug into the wave equation and solve for u(x, t+Δt):
+
+    ┌────────────────────────────────────────────────────────────────┐
+    │                                                                │
+    │  u[i, n+1] = 2·u[i, n] − u[i, n−1]                          │
+    │              + r² · (u[i+1, n] − 2·u[i, n] + u[i−1, n])     │
+    │                                                                │
+    │  where r = c·Δt/Δx  (the Courant number)                     │
+    │                                                                │
+    └────────────────────────────────────────────────────────────────┘
+
+    This is a LEAPFROG scheme: to compute the FUTURE (n+1),
+    we need the PRESENT (n) and the PAST (n−1).
+
+    It's explicit (no matrix inversion needed), second-order
+    accurate in both space and time, and remarkably simple.
+    
+
+    The computational stencil:
+
+        Time n+1:              [u[i, n+1]]     ← what we compute
+                                    │
+        Time n:     [u[i-1, n]] ── [u[i, n]] ── [u[i+1, n]]
+                                    │
+        Time n-1:              [u[i, n-1]]
+
+    Each new value depends on 3 spatial neighbors + 1 previous time.
+    This pattern tiles across the whole domain at every time step.
+    
+
+========================================================================
+  PART 3: THE CFL CONDITION
+  The rule that keeps simulations from exploding
+========================================================================
+
+    The Courant-Friedrichs-Lewy (CFL) condition:
+
+    ┌──────────────────────────────────────────────────────┐
+    │  1D:  r = c·Δt/Δx ≤ 1                              │
+    │  2D:  r = c·Δt/Δx ≤ 1/√2                           │
+    │                                                      │
+    │  Violate this → simulation EXPLODES exponentially    │
+    └──────────────────────────────────────────────────────┘
+
+    Physically: the numerical "information speed" (Δx/Δt) must be
+    at least as fast as the physical wave speed c. If the wave
+    travels farther than one grid cell per time step, the scheme
+    can't "see" it and becomes unstable.
+
+    Let's demonstrate:
+    
+    ── STABLE: Courant number r = 0.8 (< 1.0) ──
+
+       0.997 ┤                 █│                                     
+             ┤                █││                                     
+             ┤                │ █│                                    
+       0.498 ┤                │  │                                    
+             ┤               █│  │                                    
+             ┤        ███████│   ████████│                            
+       0.000 ┤████████│                  █████████████████████████████
+             └────────────────────────────────────────────────────────
+                       step 0  |  r = 0.8  |  max|u| = 0.9965
+
+       0.996 ┤                        █│                              
+             ┤                        │█│                             
+             ┤                       █│ │                             
+       0.498 ┤                       │  │                             
+             ┤                       │  █│                            
+             ┤ ██████████████████████│   ███████│                     
+       0.000 ┤█│                                ██████████████████████
+             └────────────────────────────────────────────────────────
+                      step 50  |  r = 0.8  |  max|u| = 0.9957
+
+       0.996 ┤                               ██│                      
+             ┤                               │ │                      
+             ┤                               │ │                      
+       0.498 ┤                              █│ █│                     
+             ┤                              │   │                     
+             ┤█████████████████··███████████····██████████████████████
+      -0.000 ┤                 ██│                                    
+             └────────────────────────────────────────────────────────
+                      step 100  |  r = 0.8  |  max|u| = 0.9963
+
+    ── UNSTABLE: Courant number r = 1.1 (> 1.0) ──
+
+       0.999 ┤                 █│                                     
+             ┤                █││                                     
+             ┤                │ █│                                    
+       0.500 ┤                │  │                                    
+             ┤               █│  │                                    
+             ┤        ███████│   ████████│                            
+       0.000 ┤████████│                  █████████████████████████████
+             └────────────────────────────────────────────────────────
+                        step 0  |  r = 1.1  |  max|u| = 1.0
+
+       5.000 ┤             ██│██│   █│                                
+             ┤           █││ ││ │   ││                                
+             ┤   ██████│ │││ ││ │   │█│████████████│                  
+       0.000 ┤███······██·············█············███████████████████
+             ┤            ││ ││ │   │                                 
+             ┤            ││ ││ │   │                                 
+      -5.000 ┤            █│ █│ ████│                                 
+             └────────────────────────────────────────────────────────
+                       step 50  |  r = 1.1  |  max|u| = 459.4
+
+       5.000 ┤       █│██│█│ █│ ████│ █│ █│                           
+             ┤       │││ │││ ││ │   │ ││ ││                           
+             ┤ ████│█│││ │││ ││ │   │ ││ │██████████│                 
+       0.000 ┤█····█································██████████████████
+             ┤        ││ │││ ││ │   │ ││ │                            
+             ┤        ││ │││ ││ │   │ ││ │                            
+      -5.000 ┤        █│ █│██│██│   ██│██│                            
+             └────────────────────────────────────────────────────────
+                      step 59  |  r = 1.1  |  max|u| = 9999.0
+
+    ⚠️  SIMULATION EXPLODED at step 59! max|u| = 1.25e+06
+
+    Max amplitude over time:
+
+        Step   Stable (r=0.8)   Unstable (r=1.1)
+    ──────── ──────────────── ──────────────────
+           0         0.996548           0.999420
+          10         0.995300           0.997712
+          20         0.995361           0.997753
+          50         0.995732           4.59e+02
+         100         0.996256                inf
+
+    The unstable simulation grows EXPONENTIALLY — each time step
+    amplifies the error. Within 100 steps, values go from ~1 to
+    astronomically large.
+
+    The CFL condition is non-negotiable. Every simulation in
+    this repo checks it before running.
+
+    In practice: c·Δt/Δx = 0.5 to 0.9 is common (safe margin).
+    
+
+========================================================================
+  PART 4: BOUNDARY CONDITIONS
+  What happens at the edges of your simulation domain
+========================================================================
+
+    Every simulation has a finite domain. What happens at the edges?
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  1. FIXED (Dirichlet): u = 0                               │
+    │     → Perfect reflection with phase flip                   │
+    │     → Used for: rigid walls, clamped strings               │
+    │                                                             │
+    │  2. FREE (Neumann): ∂u/∂x = 0 → u[end] = u[end-1]        │
+    │     → Perfect reflection without phase flip                │
+    │     → Used for: open pipe ends, free string ends           │
+    │                                                             │
+    │  3. PERIODIC: u[0] = u[N-1], u[N] = u[1]                  │
+    │     → Waves wrap around (infinite domain illusion)         │
+    │     → Used for: ring waveguides, periodic structures       │
+    │                                                             │
+    │  4. ABSORBING (Mur 1st order):                             │
+    │     u[0,n+1] = u[1,n] + (cΔt−Δx)/(cΔt+Δx)·(u[1,n+1]−u[0,n]) │
+    │     → Waves leave the domain without reflecting            │
+    │     → Used for: open space (ocean, atmosphere)             │
+    └─────────────────────────────────────────────────────────────┘
+    
+    ── FIXED (Dirichlet): u = 0 at boundaries ──
+
+       0.999 ┤                 █│                                     
+             ┤                █││                                     
+             ┤                │ █│                                    
+       0.500 ┤                │  │                                    
+             ┤               █│  │                                    
+             ┤        ███████│   ████████│                            
+       0.000 ┤████████│                  █████████████████████████████
+             └────────────────────────────────────────────────────────
+                                       step 0
+
+       0.999 ┤                        █│                              
+             ┤                       █│█│                             
+             ┤                       │  │                             
+       0.499 ┤                       │  │                             
+             ┤                      █│  █│                            
+             ┤ █████████████████████│    ████████│                    
+       0.000 ┤█│                                 █████████████████████
+             └────────────────────────────────────────────────────────
+                                      step 80
+
+       0.998 ┤                               ██│                      
+             ┤                               │ │                      
+             ┤                               │ │                      
+       0.499 ┤                              █│ █│                     
+             ┤                              │   │                     
+             ┤ █████████████████████████████│   ████████│             
+       0.000 ┤█│                                        ██████████████
+             └────────────────────────────────────────────────────────
+                                      step 160
+
+       0.998 ┤                                       ██│              
+             ┤                                       │ │              
+             ┤                                       │ █│             
+       0.498 ┤                                       │  │             
+             ┤                                      █│  │             
+             ┤██████████████████████████████████████····██████████████
+      -0.001 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 250
+
+    ── ABSORBING (Mur): wave exits cleanly ──
+
+       0.999 ┤                 █│                                     
+             ┤                █││                                     
+             ┤                │ █│                                    
+       0.500 ┤                │  │                                    
+             ┤               █│  │                                    
+             ┤        ███████│   ████████│                            
+       0.000 ┤████████│                  █████████████████████████████
+             └────────────────────────────────────────────────────────
+                                       step 0
+
+       0.999 ┤                        █│                              
+             ┤                       █│█│                             
+             ┤                       │  │                             
+       0.499 ┤                       │  │                             
+             ┤                      █│  █│                            
+             ┤██████████████████████│    ████████│                    
+      -0.000 ┤···································█████████████████████
+             └────────────────────────────────────────────────────────
+                                      step 80
+
+       0.998 ┤                               ██│                      
+             ┤                               │ │                      
+             ┤                               │ │                      
+       0.499 ┤                              █│ █│                     
+             ┤                              │   │                     
+             ┤██████████████████████████████│   ████████│             
+      -0.000 ┤··········································██████████████
+             └────────────────────────────────────────────────────────
+                                      step 160
+
+       0.998 ┤                                       ██│              
+             ┤                                       │ │              
+             ┤                                       │ █│             
+       0.499 ┤                                       │  │             
+             ┤                                      █│  │             
+             ┤██████████████████████████████████████····██████████████
+      -0.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 250
+
+
+    The absorbing boundary condition is crucial for simulating
+    open domains (ocean, atmosphere, free space). Without it,
+    reflections from the domain edges corrupt the simulation.
+
+    For the tsunami capstone (script 07), we use:
+      • Absorbing boundaries on the open ocean edges
+      • Reflecting boundaries at the coastline
+    
+
+========================================================================
+  PART 5: NUMERICAL DISPERSION
+  The grid distorts wave speeds
+========================================================================
+
+    A continuous wave at frequency ω propagates at speed c (exactly).
+    On a discrete grid, the NUMERICAL wave speed depends on the
+    wave's direction and frequency:
+
+        c_numerical = c · (Δx / (c·Δt)) · arcsin(r · sin(k·Δx/2)) / (k·Δx/2)
+
+    where k = 2π/λ is the wavenumber.
+
+    At LOW frequencies (λ >> Δx): c_numerical ≈ c (good!)
+    At HIGH frequencies (λ ≈ 2Δx): c_numerical < c (too slow!)
+
+    Rule of thumb: need at least 10-20 grid points per wavelength
+    to keep numerical dispersion below 1%.
+
+    This is the spatial analog of the Nyquist theorem (repo 2):
+      • Nyquist: need ≥ 2 samples per wave period in TIME
+      • FDTD:   need ≥ 2 grid points per wavelength in SPACE
+      • Both: need MORE points for ACCURACY (10-20 is practical)
+    
+    Ratio c_numerical/c at various wavelengths:
+
+        λ/Δx   Points/λ      r=0.5      r=0.8      r=1.0
+    ──────── ────────── ────────── ────────── ──────────
+           4          4   0.920214   0.956942   1.000000
+           6          6   0.965167   0.982424   1.000000
+           8          8   0.980542   0.990398   1.000000
+          10         10   0.987588   0.993937   1.000000
+          15         15   0.994502   0.997340   1.000000
+          20         20   0.996911   0.998511   1.000000
+          30         30   0.998628   0.999340   1.000000
+          50         50   0.999506   0.999763   1.000000
+         100        100   0.999877   0.999941   1.000000
+
+    Key observations:
+      • At r = 1.0 (CFL limit): numerical dispersion is ZERO!
+        The discrete scheme is EXACT. This is called the "magic" time step.
+      • At r < 1.0: high-frequency waves travel slightly too slow
+      • Need ~20 points/wavelength for < 0.1% error at r = 0.5
+
+    In practice, r = 1.0 is risky (right at the stability limit),
+    so we use r = 0.5–0.9 and ensure enough grid resolution.
+    
+
+========================================================================
+  PART 6: CONVERGENCE ANALYSIS
+  Proving the simulation gets more accurate with finer grids
+========================================================================
+
+    The FDTD scheme should converge to the true solution as
+    Δx, Δt → 0 (while maintaining CFL). Let's verify:
+
+    We simulate a standing wave sin(πx/L)·cos(πct/L) and
+    measure the error at different grid resolutions.
+    
+     Grid points           Δx       L2 Error    Ratio   Expected
+    ──────────── ──────────── ────────────── ──────── ──────────
+              20     0.050000       8.64e-03        —         ~4
+              40     0.025000       2.17e-03     3.98         ~4
+              80     0.012500       5.44e-04     3.99         ~4
+             160     0.006250       1.36e-04     4.00         ~4
+             320     0.003125       3.41e-05     4.00         ~4
+             640     0.001563       8.52e-06     4.00         ~4
+
+    The error ratio should converge to ~4 as we double resolution
+    (4× because the scheme is second-order: error ∝ Δx²).
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Second-order convergence means:                            │
+    │    • Double the grid points → 4× less error                │
+    │    • 10× the grid points → 100× less error                 │
+    │    • Accuracy improves QUADRATICALLY with resolution        │
+    └─────────────────────────────────────────────────────────────┘
+
+    This guarantees the simulation converges to the true physics.
+    More grid points → more accuracy. Always.
+    
+
+========================================================================
+  PART 7: THE 2D FDTD ENGINE
+  The universal wave simulator
+========================================================================
+
+    In 2D, the FDTD stencil becomes:
+
+    u[i,j,n+1] = 2·u[i,j,n] − u[i,j,n−1]
+                + rx² · (u[i+1,j,n] − 2·u[i,j,n] + u[i−1,j,n])
+                + ry² · (u[i,j+1,n] − 2·u[i,j,n] + u[i,j−1,n])
+
+    where rx = c·Δt/Δx, ry = c·Δt/Δy.
+
+    CFL condition: c·Δt · √(1/Δx² + 1/Δy²) ≤ 1
+    For Δx = Δy:  c·Δt/Δx ≤ 1/√2 ≈ 0.707
+
+    Let's measure the performance:
+    
+       Grid size      Cells   Time (s)      Cells/sec    Steps
+    ──────────── ────────── ────────── ────────────── ────────
+      40×40         1,600      0.048    1,653,335       50
+      60×60         3,600      0.112    1,604,645       50
+      80×80         6,400      0.203    1,579,007       50
+     100×100       10,000      0.321    1,558,846       50
+
+    The pure Python double loop is slow — production codes use:
+      • NumPy vectorization (10-100× faster)
+      • C/Fortran extensions (1000× faster)
+      • GPU computing (10,000× faster)
+
+    For this educational repo, Python clarity > raw speed.
+    The algorithm is identical regardless of implementation language.
+
+    This 2D FDTD engine is what script 07's tsunami simulation uses.
+    Same stencil, but with c(x,y) = √(g·h(x,y)) varying spatially.
+    
+
+========================================================================
+  PART 8: THE COMPLETE RECIPE
+  Step-by-step guide to simulating ANY wave
+========================================================================
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  1. IDENTIFY the wave equation and medium parameters       │
+    │     • Sound: c = √(γP/ρ), fixed/free BC at walls          │
+    │     • Light: c = c₀/n(x), index profile defines guide     │
+    │     • Water: c = √(g·h(x,y)), bathymetry defines guide    │
+    │                                                             │
+    │  2. DISCRETIZE the domain                                   │
+    │     • Choose Δx: need ≥ 10 points per wavelength           │
+    │     • Choose Δt: CFL condition c·Δt/Δx ≤ 1/√(dim)        │
+    │                                                             │
+    │  3. SET initial conditions                                  │
+    │     • u(x, 0): initial displacement                         │
+    │     • ∂u/∂t(x, 0): initial velocity                        │
+    │     • Or: drive with a source term                          │
+    │                                                             │
+    │  4. SET boundary conditions                                 │
+    │     • Reflecting: u = 0 (fixed) or ∂u/∂n = 0 (free)       │
+    │     • Absorbing: Mur ABC or damping layer                   │
+    │     • Periodic: wrap-around                                 │
+    │                                                             │
+    │  5. TIME-STEP using the FDTD formula                       │
+    │     • u_new = 2·u − u_old + r²·Laplacian(u)               │
+    │     • Repeat for desired duration                           │
+    │                                                             │
+    │  6. ANALYZE results                                         │
+    │     • Visualize snapshots                                   │
+    │     • Compute arrival times                                 │
+    │     • FFT for spectral analysis (repo 2)                   │
+    │     • Measure amplification, attenuation                    │
+    └─────────────────────────────────────────────────────────────┘
+
+    This recipe is UNIVERSAL. Scripts 02-04 each followed it
+    with different parameters. Script 06 will prove they're
+    the same. Script 07 applies it at full scale.
+    
+
+========================================================================
+  SUMMARY: NUMERICAL METHODS
+========================================================================
+
+    This script covered the computational engine:
+
+      ✓ Finite differences: replace derivatives with arithmetic
+      ✓ FDTD scheme: leapfrog time-stepping for the wave equation
+      ✓ CFL condition: c·Δt/Δx ≤ 1 (1D) or 1/√2 (2D)
+      ✓ Boundary conditions: fixed, free, periodic, absorbing
+      ✓ Numerical dispersion: grid distorts wave speeds (≥10 pts/λ)
+      ✓ Convergence: second-order → 2× resolution, 4× accuracy
+      ✓ 2D FDTD: the universal wave simulation engine
+      ✓ The complete recipe for ANY wave simulation
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  NEXT: Script 06 — the UNIFICATION.                        │
+    │  One solver, three media, same equation.                    │
+    │  Then Script 07 — the CAPSTONE: all three in one sim.      │
+    └─────────────────────────────────────────────────────────────┘
+    
+
+========================================================================
+  Done. Run 06_unified_wave_physics.py next.
+========================================================================

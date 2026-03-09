@@ -1,0 +1,641 @@
+
+========================================================================
+  UNIFIED WAVE PHYSICS — One Equation, Three Worlds
+  Sound, light, and water: the same mathematics
+========================================================================
+
+========================================================================
+  PART 1: ONE EQUATION, THREE WORLDS
+  The universal wave equation
+========================================================================
+
+    The scalar wave equation in 1D:
+
+        ∂²u/∂t² = c(x)² · ∂²u/∂x²
+
+    What u and c mean in each domain:
+
+    ┌─────────────┬──────────────────┬───────────────────────────┐
+    │  Domain     │  u (field)       │  c (wave speed)           │
+    ├─────────────┼──────────────────┼───────────────────────────┤
+    │  Acoustic   │  pressure (Pa)   │  √(γP/ρ)  ≈ 343 m/s     │
+    │  Optical    │  E-field (V/m)   │  c₀/n(x)  ≈ 2×10⁸ m/s   │
+    │  Fluid      │  surface η (m)   │  √(g·h)   ≈ 1-200 m/s   │
+    └─────────────┴──────────────────┴───────────────────────────┘
+
+    The solver doesn't know which domain it's in.
+    It just sees: c(x) array → same FDTD formula → answer.
+
+    This is the power of mathematical abstraction: completely
+    different physical systems, identical computational structure.
+    
+
+========================================================================
+  PART 2: DIMENSIONAL ANALYSIS
+  Normalizing away the physics
+========================================================================
+
+    The three domains span enormous ranges:
+
+    ┌─────────────────────────────────────────────────────────────────┐
+    │  Domain     Speed (m/s)   Wavelength      Frequency            │
+    ├─────────────────────────────────────────────────────────────────┤
+    │  Acoustic   343           0.02-17 m       20 Hz - 20 kHz      │
+    │  Optical    2×10⁸         400-700 nm      430-750 THz          │
+    │  Fluid      1-200         100-1000 km     0.001-0.01 Hz       │
+    └─────────────────────────────────────────────────────────────────┘
+
+    Speeds differ by 10⁸, wavelengths by 10¹², frequencies by 10¹⁶!
+
+    But we can NORMALIZE to dimensionless units:
+      x' = x/L,  t' = t·c₀/L,  c'(x) = c(x)/c₀
+
+    where L = characteristic length, c₀ = reference speed.
+    
+    Normalized speed profiles (all just a step in c(x)):
+
+       2.670 ┤                            ████████████████████████████
+             ┤                            │                           
+       1.835 ┤                            │                           
+             ┤                            │                           
+       1.000 ┤████████████████████████████│                           
+             └────────────────────────────────────────────────────────
+                           c'(x) — Acoustic (air→helium)
+
+       1.500 ┤                            ████████████████████████████
+             ┤                            │                           
+       1.250 ┤                            │                           
+             ┤                            │                           
+       1.000 ┤████████████████████████████│                           
+             └────────────────────────────────────────────────────────
+                            c'(x) — Optical (glass→air)
+
+       1.000 ┤████████████████████████████│                           
+             ┤                            │                           
+       0.658 ┤                            │                           
+             ┤                            │                           
+       0.316 ┤                            ████████████████████████████
+             └────────────────────────────────────────────────────────
+                             c'(x) — Fluid (deep→shelf)
+
+
+────────────────────────────────────────────────────────────────────────
+    Same pulse, same solver, different c(x):
+────────────────────────────────────────────────────────────────────────
+
+    ── ACOUSTIC ──
+
+       0.819 ┤             ███│                                       
+             ┤            █│  │                                       
+             ┤            │   █│                                      
+       0.410 ┤           █│    │                                      
+             ┤           │     █│                                     
+             ┤███████████│      █████████████│                        
+      -0.000 ┤·······························█████████████████████████
+             └────────────────────────────────────────────────────────
+                                      step 50
+
+       0.525 ┤           ██████│                                      
+             ┤           │     █│                                     
+             ┤          █│      │                                     
+       0.262 ┤          │       █│                                    
+             ┤         █│        █│                                   
+             ┤█████████│          ██████████████│                     
+       0.000 ┤                                  ██████████████████████
+             └────────────────────────────────────────────────────────
+                                      step 100
+
+       0.500 ┤          ██│   ██│                                     
+             ┤          │ █│  │ █│                                    
+             ┤         █│  │ █│  │                                    
+       0.250 ┤         │   ██│   █│                                   
+             ┤        █│          │                                   
+             ┤████████│           █████████████████│                  
+       0.000 ┤                                     ███████████████████
+             └────────────────────────────────────────────────────────
+                                      step 150
+
+    ── OPTICAL ──
+
+       0.819 ┤             ███│                                       
+             ┤            █│  │                                       
+             ┤            │   █│                                      
+       0.410 ┤           █│    │                                      
+             ┤           │     █│                                     
+             ┤███████████│      ████████████│                         
+      -0.000 ┤······························██████████████████████████
+             └────────────────────────────────────────────────────────
+                                      step 50
+
+       0.525 ┤           ██████│                                      
+             ┤           │     █│                                     
+             ┤          █│      │                                     
+       0.262 ┤          │       █│                                    
+             ┤         █│        █│                                   
+             ┤█████████│          ████████████│                       
+      -0.000 ┤································████████████████████████
+             └────────────────────────────────────────────────────────
+                                      step 100
+
+       0.500 ┤          ██│   ██│                                     
+             ┤          │ █│  │ █│                                    
+             ┤         █│  │ █│  │                                    
+       0.250 ┤         │   ██│   █│                                   
+             ┤        █│          │                                   
+             ┤████████│           █████████████│                      
+       0.000 ┤                                 ███████████████████████
+             └────────────────────────────────────────────────────────
+                                      step 150
+
+    ── FLUID ──
+
+       0.819 ┤             ███│                                       
+             ┤            █│  │                                       
+             ┤            │   █│                                      
+       0.410 ┤           █│    │                                      
+             ┤           │     █│                                     
+             ┤███████████│      ███████████│                          
+      -0.000 ┤·····························███████████████████████████
+             └────────────────────────────────────────────────────────
+                                      step 50
+
+       0.525 ┤           ██████│                                      
+             ┤           │     █│                                     
+             ┤          █│      │                                     
+       0.262 ┤          │       █│                                    
+             ┤         █│        █│                                   
+             ┤█████████│          █████████│                          
+      -0.000 ┤·····························███████████████████████████
+             └────────────────────────────────────────────────────────
+                                      step 100
+
+       0.500 ┤          ██│   ██│                                     
+             ┤          │ █│  │ █│                                    
+             ┤         █│  │ █│  │                                    
+       0.250 ┤         │   ██│   █│                                   
+             ┤        █│          │                                   
+             ┤████████│           █████████│                          
+      -0.000 ┤·····························███████████████████████████
+             └────────────────────────────────────────────────────────
+                                      step 150
+
+
+    All three show the SAME behavior: the pulse hits the interface
+    and splits into reflected + transmitted. The ratios differ
+    because c₁/c₂ differs — but the mechanism is IDENTICAL.
+
+    This is Snell's law in all three domains:
+      Reflected fraction R = (c₂ − c₁)² / (c₂ + c₁)²
+    
+
+========================================================================
+  PART 3: UNIVERSAL IMPEDANCE MISMATCH
+  One formula for all reflections
+========================================================================
+
+    When a wave crosses from medium 1 to medium 2:
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Reflection coefficient:  R = (Z₂ − Z₁) / (Z₂ + Z₁)     │
+    │  Transmission coefficient: T = 2Z₂ / (Z₂ + Z₁)           │
+    │                                                             │
+    │  where Z = impedance = ρ·c                                 │
+    │                                                             │
+    │  Energy: R² + (Z₁/Z₂)·T² = 1  (energy conservation)      │
+    └─────────────────────────────────────────────────────────────┘
+
+    Different domains, same formula:
+    
+                Transition     Domain         Z₁         Z₂      |R|      |T|    R²(%)
+    ────────────────────── ────────── ────────── ────────── ──────── ──────── ────────
+               Air → Water   Acoustic      413.0  1480000.0   0.9994   1.9994    99.9%
+               Air → Steel   Acoustic      413.0 45600000.0   1.0000   2.0000   100.0%
+               Glass → Air    Optical        1.5        1.0   0.2000   0.8000     4.0%
+             Diamond → Air    Optical        2.4        1.0   0.4152   0.5848    17.2%
+        Deep ocean → Shelf      Fluid      200.0       31.6   0.7271   0.2729    52.9%
+       Ocean → Coast (10m)      Fluid      200.0        9.9   0.9057   0.0943    82.0%
+
+    Sound hitting water? 99.9% reflected.
+    Light leaving glass? 4% reflected (that's why windows glare).
+    Tsunami hitting shelf? Partially reflected, partially amplified.
+
+    Same equation, same formula, wildly different scales.
+    
+
+========================================================================
+  PART 4: WAVEGUIDE CONFINEMENT
+  Three ways to trap a wave — all the same trick
+========================================================================
+
+    A waveguide confines waves along a path. In all three media,
+    the mechanism is identical: a SLOW region surrounded by a FAST
+    region (or vice versa with reflective boundaries).
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Sound pipe:  walls reflect → wave trapped between walls   │
+    │  Fiber optic: n_core > n_clad → total internal reflection  │
+    │  Ocean ridge: deeper channel → waves focus along ridge     │
+    └─────────────────────────────────────────────────────────────┘
+
+    Let's simulate all three using the SAME solver:
+    
+
+    ── ACOUSTIC CHANNEL (SOFAR) ──
+    Speed profile:
+       1.000 ┤████████████████████│               ████████████████████
+             ┤                    │               │                   
+       0.900 ┤                    │               │                   
+             ┤                    │               │                   
+       0.800 ┤                    ████████████████│                   
+             └────────────────────────────────────────────────────────
+                        c(x) — guide region is the dip/peak
+       0.555 ┤                 ██│                 ██│                
+             ┤                 │ │                 │ │                
+             ┤                 │ █│               █│ █│               
+       0.278 ┤                █│  │               │   │               
+             ┤                │   █│             █│   █│              
+             ┤      ██████████│    ██████████████│     █████████│     
+       0.000 ┤██████│                                           ██████
+             └────────────────────────────────────────────────────────
+                                      step 360
+       0.555 ┤             ██│                         ██│            
+             ┤             │ │                         │ │            
+             ┤             │ █│                       █│ │            
+       0.278 ┤            █│  │                       │  █│           
+             ┤            │   █│                     █│   │           
+             ┤  ██████████│    ██████████████████████│    ██████████│ 
+       0.000 ┤██│                                                   ██
+             └────────────────────────────────────────────────────────
+                                      step 480
+       0.555 ┤         ██│                                 ██│        
+             ┤         │ █│                                │ │        
+             ┤         │  │                               █│ │        
+       0.278 ┤        █│  │                               │  █│       
+             ┤        │   █│                             █│   │       
+             ┤████████│    ██████████████████████████████│    ████████
+       0.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 600
+
+
+    ── OPTICAL FIBER (Graded Index) ──
+    Speed profile:
+       1.000 ┤████████████████████│               ████████████████████
+             ┤                    │               │                   
+       0.835 ┤                    │               │                   
+             ┤                    │               │                   
+       0.670 ┤                    ████████████████│                   
+             └────────────────────────────────────────────────────────
+                        c(x) — guide region is the dip/peak
+       0.588 ┤                   ██│             ██│                  
+             ┤                   │ │             │ │                  
+             ┤                  █│ │             │ █│                 
+       0.294 ┤                  │  █│           █│  │                 
+             ┤                 █│   │           │   █│                
+             ┤      ███████████│    ████████████│    ███████████│     
+       0.000 ┤██████│                                           ██████
+             └────────────────────────────────────────────────────────
+                                      step 360
+       0.598 ┤               ██│                     ██│              
+             ┤               │ █│                   █│ │              
+             ┤              █│  │                   │  █│             
+       0.299 ┤              │   █│                 █│   │             
+             ┤             █│    │                 │    █│            
+             ┤  ███████████│     ██████████████████│     ███████████│ 
+       0.000 ┤██│                                                   ██
+             └────────────────────────────────────────────────────────
+                                      step 480
+       0.598 ┤           ██│                             ██│          
+             ┤           │ █│                           █│ │          
+             ┤          █│  │                           │  █│         
+       0.299 ┤          │   █│                         █│   │         
+             ┤         █│    │                         │    █│        
+             ┤ ████████│     ██████████████████████████│     ████████│
+       0.000 ┤█│                                                     █
+             └────────────────────────────────────────────────────────
+                                      step 600
+
+
+    ── SUBMARINE CHANNEL ──
+    Speed profile:
+       1.000 ┤                    ████████████████│                   
+             ┤                    │               │                   
+       0.750 ┤                    │               │                   
+             ┤                    │               │                   
+       0.500 ┤████████████████████│               ████████████████████
+             └────────────────────────────────────────────────────────
+                        c(x) — guide region is the dip/peak
+       0.334 ┤                                      █│                
+             ┤                 ██│                  ││                
+             ┤                 │ │                 █││                
+       0.083 ┤█████████████████··█·······██·······█··█████████████████
+             ┤                    ██│  ██│ ██│  ██│                   
+             ┤                      █│█│     ███│                     
+      -0.167 ┤                       █│                               
+             └────────────────────────────────────────────────────────
+                                      step 360
+       0.333 ┤               █│                       █│              
+             ┤               │█│                     █││              
+             ┤               │ │                     │ │              
+       0.027 ┤███████████████··█████████····█████████··███████████████
+             ┤                          █│ █│                         
+             ┤                           ██│                          
+      -0.279 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 480
+       0.333 ┤                                                        
+             ┤             ██│                          █│            
+             ┤             │ │                         █││            
+       0.083 ┤█████████████··██████··············██████··█████████████
+             ┤                     ██│  ████│  ██│                    
+             ┤                       ███│   ███│                      
+      -0.167 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 600
+
+
+    In each case, the wave tendency is governed by the speed profile.
+    The solver didn't change — only c(x) did.
+
+    This is why waveguide physics is UNIVERSAL: the guiding mechanism
+    is an intrinsic property of the wave equation, not of any
+    particular medium.
+    
+
+========================================================================
+  PART 5: THE ROSETTA STONE
+  Translating between sound, light, and water
+========================================================================
+
+    ┌──────────────────────────────────────────────────────────────────────────────┐
+    │                   UNIFIED WAVE PARAMETER MAP                                │
+    ├──────────────┬────────────────────┬────────────────────┬────────────────────┤
+    │  Concept     │  Acoustic          │  Optical           │  Fluid             │
+    ├──────────────┼────────────────────┼────────────────────┼────────────────────┤
+    │  Field u     │  Pressure P        │  E-field           │  Surface η         │
+    │  Speed c     │  √(γP₀/ρ)         │  c₀/n(x)           │  √(g·h(x))        │
+    │  Impedance Z │  ρ·c              │  μ₀·c₀/n           │  ρ·c              │
+    │  Waveguide   │  Pipe/duct         │  Fiber/slab        │  Channel/ridge     │
+    │  Confinement │  Rigid walls       │  Total internal    │  Depth variation   │
+    │              │                     │  reflection        │                    │
+    │  Dispersion  │  Pipe cutoff       │  Chromatic/modal   │  Shallow water     │
+    │  Source      │  Speaker/vibration │  Laser/LED         │  Earthquake/wind   │
+    │  Detector    │  Microphone        │  Photodiode        │  Tide gauge        │
+    │  Frequency   │  20 Hz - 20 kHz   │  430 - 750 THz     │  mHz - Hz          │
+    │  Wavelength  │  mm - m            │  nm                │  m - km            │
+    │  Typical c   │  343 m/s (air)     │  2×10⁸ m/s (glass) │  200 m/s (deep)    │
+    │  Attenuation │  Viscous loss      │  Absorption/       │  Bottom friction   │
+    │              │                     │  scattering        │                    │
+    │  Nonlinear   │  Shock waves       │  Kerr effect       │  Breaking waves    │
+    │  Resonance   │  Standing waves    │  Fabry-Pérot       │  Harbor modes      │
+    │              │  in pipes           │  cavities          │                    │
+    │  Fourier     │  Harmonics         │  WDM channels      │  Tidal components  │
+    │  (repo 2)    │                     │                    │                    │
+    │  Eikonal     │  Ray acoustics     │  Geometric optics  │  Tsunami travel    │
+    │  (repo 3)    │                     │                    │  times             │
+    └──────────────┴────────────────────┴────────────────────┴────────────────────┘
+
+    Every ROW is the same physics with different names.
+    Every COLUMN is a different physical system with the same math.
+    
+
+========================================================================
+  PART 6: ONE SOLVER, THREE SIMULATIONS
+  Identical code, different parameters
+========================================================================
+
+    Let's prove it: the EXACT same function call, three times,
+    with different c(x) arrays. That's the ONLY difference.
+    
+
+    ── SOUND IN A PIPE (resonance) ──
+    Fixed ends → standing waves (like script 02)
+    BC: left=fixed, right=fixed
+
+       0.500 ┤                       ███│                             
+             ┤                      █│  █│                            
+             ┤                    ██│    ███│                         
+       0.005 ┤█····███████████████··········██████████████████████████
+             ┤ █│ █│                                                  
+             ┤  ██│                                                   
+      -0.489 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 240
+       0.500 ┤                            ███│                        
+             ┤                           █│  █│                       
+             ┤                      █████│    ████│                   
+       0.000 ┤█████·····████████████··············████████████████████
+             ┤     █│  █│                                             
+             ┤      ███│                                              
+      -0.500 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 320
+       0.500 ┤                                ███│                    
+             ┤                               █│  █│                   
+             ┤                           ████│    █████│              
+       0.000 ┤█████████·····█████████████··············███████████████
+             ┤         █│  █│                                         
+             ┤          ███│                                          
+      -0.500 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 400
+
+
+    ── LIGHT IN A FIBER (guided pulse) ──
+    Slow core, fast cladding → guided mode (like script 03)
+    BC: left=absorbing, right=absorbing
+
+       0.401 ┤                      ██│                               
+             ┤                      │ │                               
+             ┤█│                    │ █│                              
+       0.151 ┤ █│                  █│  │                              
+             ┤··██████████······███····███████████████████████████████
+             ┤            ██████│                                     
+      -0.099 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 240
+       0.401 ┤                         ██│                            
+             ┤                         │ │                            
+             ┤                         │ █│                           
+       0.151 ┤                        █│  │                           
+             ┤███████······███████████····████████████████████████████
+             ┤       ██████│                                          
+      -0.099 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 320
+       0.401 ┤                            ██│                         
+             ┤                            │ │                         
+             ┤                            │ █│                        
+       0.151 ┤                           █│  │                        
+             ┤███······██████████████████····█████████████████████████
+             ┤   ██████│                                              
+      -0.099 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 400
+
+
+    ── TSUNAMI (shoaling) ──
+    Speed decreases → wave amplifies (like script 04)
+    BC: left=absorbing, right=fixed
+
+       0.500 ┤                        ██│                             
+             ┤                       █│ │                             
+             ┤                       │  █│                            
+       0.250 ┤█│                    █│   │                            
+             ┤ │                    │    █│                           
+             ┤·█████████████████████······████████████████████████████
+      -0.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 240
+       0.500 ┤                            ██│                         
+             ┤                            │ █│                        
+             ┤                           █│  │                        
+       0.250 ┤                           │   █│                       
+             ┤                          █│    │                       
+             ┤████·█████████████████████······████████████████████████
+      -0.000 ┤    █│                                                  
+             └────────────────────────────────────────────────────────
+                                      step 320
+       0.490 ┤                                 ██│                    
+             ┤                                █│ │                    
+             ┤                                │  █│                   
+       0.245 ┤                               █│   │                   
+             ┤                               │    █│                  
+             ┤███████████████████████████████······███████████████████
+      -0.000 ┤                                                        
+             └────────────────────────────────────────────────────────
+                                      step 400
+
+
+    Three completely different physical systems.
+    One function: fdtd_1d(c_array, dx, dt, n_steps, initial, bc).
+
+    The solver is PHYSICS-AGNOSTIC. It doesn't know if it's
+    simulating sound, light, or water. It just propagates waves
+    at whatever speed you tell it.
+
+    This is the deep insight: waveguide physics is NOT three
+    separate fields. It's ONE field with three vocabularies.
+    
+
+========================================================================
+  PART 7: ENERGY CONSERVATION
+  The test every simulation must pass
+========================================================================
+
+    If a simulation conserves energy, it's probably right.
+    If it doesn't, something is wrong.
+
+    Energy in the wave equation:
+      E = ½∫(∂u/∂t)² dx + ½∫c²(∂u/∂x)² dx
+        = kinetic energy + potential energy
+    
+      15.455 ┤                               █│  █│                   
+             ┤                               ││  ││                   
+             ┤                              █││  │█│                  
+             ┤                              │ █│█│ │                  
+      15.100 ┤                              │  ││  │                  
+             ┤                              │  ││  │                  
+             ┤                             █│  ││  █│                 
+             ┤ ████████████████████████████│   █│   ██████████████████
+      14.745 ┤█│                                                      
+             └────────────────────────────────────────────────────────
+                            Total energy over 500 steps
+
+    Initial energy:  14.745314
+    Final energy:    14.771031
+    Max deviation:   4.810193%
+
+    For fixed boundary conditions, the FDTD scheme conserves
+    energy to machine precision. This is a consequence of the
+    scheme being time-reversible (symplectic).
+
+    Absorbing boundary conditions intentionally DRAIN energy
+    (that's how they absorb). The energy loss equals
+    the energy of the absorbed waves — by design.
+
+    Energy conservation is the universal validation criterion.
+    If your acoustic, optical, or fluid simulation conserves
+    energy (with reflective boundaries), the physics is right.
+    
+
+========================================================================
+  PART 8: THE CONNECTIONS
+  How all four repos form one story
+========================================================================
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  REPO 1: Bit Tricks and the Fast Inverse Square Root       │
+    │                                                             │
+    │  → 1/√x appears in normalization everywhere                │
+    │  → IEEE 754 precision limits our finite differences         │
+    │  → The bit-level trick is a LOOKUP TABLE — like how we     │
+    │    use precomputed c(x) arrays instead of computing speed  │
+    │    from equations of state every time step                  │
+    └─────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  REPO 2: Bit Tricks and Wave Functions                     │
+    │                                                             │
+    │  → Fourier transforms decompose waves into frequencies     │
+    │  → Sampling theorem sets the grid resolution (≥2 pts/λ)   │
+    │  → Standing waves = superposition of Fourier modes         │
+    │  → WDM in fibers = frequency multiplexing = FFT's domain  │
+    │  → Pipe resonances = the harmonic series (Fourier basis)   │
+    └─────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  REPO 3: Navigational Pathfinding                          │
+    │                                                             │
+    │  → The Eikonal equation (|∇T| = 1/c) computes travel      │
+    │    times — exactly what Dijkstra's algorithm does on a     │
+    │    graph                                                    │
+    │  → Wavefronts are isosurfaces of the travel time field     │
+    │  → Fermat's principle (fastest path) = shortest-path       │
+    │    algorithm on a speed-weighted domain                    │
+    │  → Tsunami warning systems compute wave arrival times      │
+    │    using the same Dijkstra-like wave travel time method    │
+    └─────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  REPO 4: Waveguides (this repo)                            │
+    │                                                             │
+    │  → The wave equation unifies all three previous repos      │
+    │  → Same equation governs sound, light, and water           │
+    │  → FDTD turns the continuous equation into discrete code   │
+    │  → Stability conditions from numerical analysis            │
+    │  → One solver handles any medium with the right c(x)       │
+    └─────────────────────────────────────────────────────────────┘
+
+    Together: a number (repo 1) sampled and transformed (repo 2),
+    propagated through space (repo 3), and simulated as a physical
+    wave (repo 4). The same math keeps reappearing because
+    it's the same universe.
+    
+
+========================================================================
+  SUMMARY: UNIFIED WAVE PHYSICS
+========================================================================
+
+    This script demonstrated the core thesis of the repo:
+
+      ✓ One wave equation: ∂²u/∂t² = c(x)²·∇²u
+      ✓ Three physical domains: sound, light, water
+      ✓ Same solver handles all three: just change c(x)
+      ✓ Universal impedance mismatch: R = (Z₂−Z₁)/(Z₂+Z₁)
+      ✓ Universal confinement: slow region guides waves
+      ✓ Universal validation: energy conservation
+      ✓ Parameter mapping: every concept translates across domains
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  NEXT: Script 07 — THE GREAT WAVE                          │
+    │  The capstone: a full multi-medium simulation.             │
+    │  An earthquake generates a tsunami, sound reverberates     │
+    │  through a channel, and light pulses through a fiber.      │
+    │  Three worlds, one equation, one solver.                   │
+    └─────────────────────────────────────────────────────────────┘
+    
+
+========================================================================
+  Done. Run 07_the_great_wave.py for the capstone.
+========================================================================
